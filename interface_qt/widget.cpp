@@ -1,8 +1,9 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include <QString>
 
 void takeusbinf(){};
-void makemasterkey(char *log,char *pin);
+void makemasterkey(QString log,QString pin){};
 
 void Widget::EventHandler_for_button1(void)
 {
@@ -34,16 +35,12 @@ void Widget::EventHandler_for_button5(void)
 {
     //здесь код для создания мастерключа, работает на кнопку "ок"
     int flag = 0;
-    char * log,*pin ;
+    QString  log,pin ;
     if (flag == 0) {
-        log = new char[100];
-        pin = new char[100];
         takeusbinf();
-        log = ui->lineEdit3->text();
-        pin = ui->lineEdit4->text();
+        log = ui->lineEdit_3->text();
+        pin = ui->lineEdit_4->text();
         makemasterkey(log,pin);
-        delete [] pin;
-        delete [] log;
         ui->lineEdit_2->setText("Masterkey was successfully created");
         ui->widget->setVisible(false);
         ui->pushButton->setVisible(true);
