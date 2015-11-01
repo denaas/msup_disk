@@ -22,6 +22,8 @@ public slots:
     void EventHandler_for_button2();
     void EventHandler_for_button3();
     void EventHandler_for_button4();
+    void EventHandler_for_button5();  
+    void EventHandler_for_button6();
 
 };
 
