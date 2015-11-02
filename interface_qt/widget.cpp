@@ -1,5 +1,9 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include <QString>
+
+void takeusbinf(){};
+void makemasterkey(QString log,QString pin){};
 
 void Widget::EventHandler_for_button1(void)
 {
@@ -30,14 +34,32 @@ void Widget::EventHandler_for_button4(void)
 void Widget::EventHandler_for_button5(void)
 {
     //здесь код для создания мастерключа, работает на кнопку "ок"
-    ui->lineEdit_2->setText("Masterkey was successfully created");
-    ui->widget->setVisible(false);
-    ui->pushButton->setVisible(true);
-    ui->pushButton_2->setVisible(true);
-    ui->pushButton_3->setVisible(true);
-    ui->pushButton_4->setVisible(true);
-    ui->lineEdit->setVisible(true);
-    ui->lineEdit_2->setVisible(true);
+    int flag = 0;
+    QString  log,pin ;
+    if (flag == 0) {
+        takeusbinf();
+        log = ui->lineEdit_3->text();
+        pin = ui->lineEdit_4->text();
+        makemasterkey(log,pin);
+        ui->lineEdit_2->setText("Masterkey was successfully created");
+        ui->widget->setVisible(false);
+        ui->pushButton->setVisible(true);
+        ui->pushButton_2->setVisible(true);
+        ui->pushButton_3->setVisible(true);
+        ui->pushButton_4->setVisible(true);
+        ui->lineEdit->setVisible(true);
+        ui->lineEdit_2->setVisible(true);
+    }
+    else {
+        ui->lineEdit_2->setText("Masterkey has not been created");
+        ui->widget->setVisible(false);
+        ui->pushButton->setVisible(true);
+        ui->pushButton_2->setVisible(true);
+        ui->pushButton_3->setVisible(true);
+        ui->pushButton_4->setVisible(true);
+        ui->lineEdit->setVisible(true);
+        ui->lineEdit_2->setVisible(true);
+    }
 }
 
 void Widget::EventHandler_for_button6(void)
