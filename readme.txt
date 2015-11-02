@@ -1,0 +1,1 @@
+Interface_qt написан в qt_creator
