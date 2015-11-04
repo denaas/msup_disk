@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Widget</string>
+   <string>TrueCrypt</string>
   </property>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
@@ -82,9 +82,9 @@
    <property name="geometry">
     <rect>
      <x>32</x>
-     <y>70</y>
+     <y>60</y>
      <width>331</width>
-     <height>27</height>
+     <height>71</height>
     </rect>
    </property>
   </widget>
@@ -149,6 +149,10 @@
      <string>Cancel</string>
     </property>
    </widget>
+   <zorder>lineEdit_3</zorder>
+   <zorder>pushButton_5</zorder>
+   <zorder>pushButton_6</zorder>
+   <zorder>lineEdit_4</zorder>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
