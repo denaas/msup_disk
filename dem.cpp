@@ -541,6 +541,7 @@ void do_build(struct players *p,int i)
 		printf("write error to fd = %d",p[i].fd);
 }
 
+//help info for daemon
 void do_help(struct players *p, int i)
 {
 	char buf[1024]="\0";
@@ -548,19 +549,8 @@ void do_help(struct players *p, int i)
 	add_str(buf,"******************************************************\n");
 	add_str(buf,"COMMAND                     DESCRIPTION               \n");
 	add_str(buf," info [number]         get partners' information      \n");
-	add_str(buf," market                get market information         \n");
-	add_str(buf," buy <amount> <price>  place request for buying raw   \n");
-	add_str(buf," sell <amount> <price> place request to sell product  \n");
-	add_str(buf," prod                  produce 1 unit                 \n");
-	add_str(buf," build                 start building a factory       \n");
-	add_str(buf," turn                  end your turn                  \n");
 	add_str(buf," help                  get help                       \n");
-	add_str(buf," chat <message>        say <massage> globally         \n");
-	add_str(buf," who                   see who hasn't end the turn    \n");
-	add_str(buf,"                                                      \n");
 	add_str(buf,"             RULES:                                   \n");
-	add_str(buf," Please read the rules in the \"Multi-user Game       \n");
-	add_str(buf," Server\" book written by A.V.Stolyarov               \n");
 	add_str(buf,"******************************************************\n");
 	add_str(buf,"\n>");
 	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
@@ -753,7 +743,6 @@ void welcome(int fd, int new)
 	if (fd == new){
 		add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 		add_str(buf,"|                Welcome!              |\n");
-		add_str(buf,"|   Please wait for other players...   |\n");
 		add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 	} else {
 		add_str(buf,"New client has been connected.\n");
@@ -770,7 +759,7 @@ void write_sorry(int fd)
 
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 	add_str(buf,"|                      Sorry!                     |\n");
-	add_str(buf,"| Maximum number of players have been connected!  |\n");
+	add_str(buf,"| Maximum number of sockets have been connected!  |\n");
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 	wc = write(fd, buf, strlen(buf) + 1);
 	if (wc == -1)
@@ -1314,21 +1303,7 @@ void lost(struct players *p,int i)
 	char buf[1024]="\0";
 	add_str(buf,"\n");
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"| #     #   ###   #   #                     |\n");
-	add_str(buf,"|  #   #   #   #  #   #                     |\n");
-	add_str(buf,"|   # #    #   #  #   #                     |\n");
-	add_str(buf,"|    #     #   #  #   #                     |\n");
-	add_str(buf,"|    #      ###    ###                      |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|            #       ###   ###### #######   |\n");
-	add_str(buf,"|            #      #   #  #         #      |\n");
-	add_str(buf,"|            #      #   #  ######    #      |\n");
-	add_str(buf,"|            #   #  #   #       #    #      |\n");
-	add_str(buf,"|            #####   ###   ######    #      |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|                                           |\n");
+	add_str(buf,"|                    L                      |\n");
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
 		printf("write error to fd = %d",p[i].fd);
@@ -1339,21 +1314,7 @@ void won(struct players *p,int i)
 	char buf[1024]="\0";
 	add_str(buf,"\n");
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"| #     #   ###   #   #     (@)   (@)       |\n");
-	add_str(buf,"|  #   #   #   #  #   #         |           |\n");
-	add_str(buf,"|   # #    #   #  #   #       \\___/         |\n");
-	add_str(buf,"|    #     #   #  #   #                     |\n");
-	add_str(buf,"|    #      ###    ###                      |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|        #   #   #    ###   ##    #   #     |\n");
-	add_str(buf,"|        #   #   #   #   #  # #   #   #     |\n");
-	add_str(buf,"|        #   #   #   #   #  #  #  #   #     |\n");
-	add_str(buf,"|        #   #   #   #   #  #   # #         |\n");
-	add_str(buf,"|         ### ###     ###   #    ##   #     |\n");
-	add_str(buf,"|                                           |\n");
-	add_str(buf,"|                                           |\n");
+	add_str(buf,"|             W                             |\n");
 	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
 	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
 		printf("write error to fd = %d",p[i].fd);
