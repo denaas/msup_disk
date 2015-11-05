@@ -127,30 +127,25 @@ void Widget::EventHandler_for_button1(void)
    flag = count_USB();
    if (flag == 1) {
         takeusbinf(data_usb);
-        ui->pushButton->setVisible(false);
-        ui->pushButton_2->setVisible(false);
-        ui->pushButton_3->setVisible(false);
-        ui->pushButton_4->setVisible(false);
-        ui->lineEdit->setVisible(false);
-        ui->lineEdit_2->setVisible(false);
+        ui->widget_2->setVisible(false);
         ui->widget->setVisible(true);
    }
-   else ui->lineEdit_2->setText("Masterkey has not been created,\r\n because there is not one USB drive inserted");
+   else ui->textEdit_2->setText("Masterkey has not been created,\r\n because there is not one USB drive inserted");
 }
 
 void Widget::EventHandler_for_button2(void)
 {
-   ui->lineEdit_2->setText("File was successfully encoded");
+   ui->textEdit_2->setText("File was successfully encoded");
 }
 
 void Widget::EventHandler_for_button3(void)
 {
-   ui->lineEdit_2->setText("File was successfully decoded");
+   ui->textEdit_2->setText("File was successfully decoded");
 }
 
 void Widget::EventHandler_for_button4(void)
 {
-   ui->lineEdit_2->setText("File was successfully deleted");
+   ui->textEdit_2->setText("File was successfully deleted");
 }
 
 void Widget::EventHandler_for_button5(void)
@@ -169,40 +164,25 @@ void Widget::EventHandler_for_button5(void)
             log = ui->lineEdit_3->text();
             pin = ui->lineEdit_4->text();
             makemasterkey(data_usb,log,pin);
-            ui->lineEdit_2->setText("Masterkey was successfully created");
+            ui->textEdit_2->setText("Masterkey was successfully created");
         }
-        else ui->lineEdit_2->setText("Masterkey has not been created, because you changed USB");
+        else ui->textEdit_2->setText("Masterkey has not been created, because you changed USB");
         ui->widget->setVisible(false);
-        ui->pushButton->setVisible(true);
-        ui->pushButton_2->setVisible(true);
-        ui->pushButton_3->setVisible(true);
-        ui->pushButton_4->setVisible(true);
-        ui->lineEdit->setVisible(true);
-        ui->lineEdit_2->setVisible(true);
+        ui->widget_2->setVisible(true);
     }
     else {
-        if (flag == 0) ui->lineEdit_2->setText("Masterkey has not been created,\n because there is no USB drive inserted");
-        else ui->lineEdit_2->setText("Masterkey has not been created,\n because there is more than one USB drive inserted");
+        if (flag == 0) ui->textEdit_2->setText("Masterkey has not been created,\n because there is no USB drive inserted");
+        else ui->textEdit_2->setText("Masterkey has not been created,\n because there is more than one USB drive inserted");
         ui->widget->setVisible(false);
-        ui->pushButton->setVisible(true);
-        ui->pushButton_2->setVisible(true);
-        ui->pushButton_3->setVisible(true);
-        ui->pushButton_4->setVisible(true);
-        ui->lineEdit->setVisible(true);
-        ui->lineEdit_2->setVisible(true);
+        ui->widget_2->setVisible(true);
     }
 }
 
 void Widget::EventHandler_for_button6(void)
 {
-    ui->lineEdit_2->setText("Masterkey has not been created");
+    ui->textEdit_2->setText("Masterkey has not been created");
     ui->widget->setVisible(false);
-    ui->pushButton->setVisible(true);
-    ui->pushButton_2->setVisible(true);
-    ui->pushButton_3->setVisible(true);
-    ui->pushButton_4->setVisible(true);
-    ui->lineEdit->setVisible(true);
-    ui->lineEdit_2->setVisible(true);
+    ui->widget_2->setVisible(true);
 }
 
 Widget::Widget(QWidget *parent) :
