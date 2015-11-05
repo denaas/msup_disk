@@ -48,7 +48,7 @@ int count_USB(){                                     //считает колич
         pipe(fd2);
         pid2 = fork();
         if(!pid2){
-           dup2(fd2[1],1);
+            dup2(fd2[1],1);
             close(fd1[1]);
             close(fd1[0]);
             close(fd2[0]);
@@ -112,7 +112,7 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
             }
             q[i-t] = '\0';
             i++;
-            data.push_back(q);
+            data[z] = q;
          }
     }
 }
@@ -120,12 +120,11 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
 void makemasterkey(vector<char*> &data,QString log,QString pin){};
 
 
-vector <char*> data_usb;
+vector <char*> data_usb(2),check(2);
 void Widget::EventHandler_for_button1(void)
 {
    int flag;
    flag = count_USB();
-   cout<<flag<<endl;
    if (flag == 1) {
         takeusbinf(data_usb);
         ui->pushButton->setVisible(false);
@@ -161,10 +160,18 @@ void Widget::EventHandler_for_button5(void)
     QString  log,pin ;
     flag = count_USB();
     if (flag == 1) {
-        log = ui->lineEdit_3->text();
-        pin = ui->lineEdit_4->text();
-        makemasterkey(data_usb,log,pin);
-        ui->lineEdit_2->setText("Masterkey was successfully created");
+        takeusbinf(check);
+        if (!strcmp(data_usb[0],check[0]) && !strcmp(data_usb[1],check[1]))  {
+            /*cout<<data_usb[0]<<endl;
+            cout<<data_usb[1]<<endl;
+            cout<<check[0]<<endl;
+            cout<<check[1]<<endl;*/
+            log = ui->lineEdit_3->text();
+            pin = ui->lineEdit_4->text();
+            makemasterkey(data_usb,log,pin);
+            ui->lineEdit_2->setText("Masterkey was successfully created");
+        }
+        else ui->lineEdit_2->setText("Masterkey has not been created, because you changed USB");
         ui->widget->setVisible(false);
         ui->pushButton->setVisible(true);
         ui->pushButton_2->setVisible(true);
