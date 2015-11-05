@@ -230,211 +230,6 @@ void do_alert(struct players *p,int i)
 	const char buf1[] = "USB was removed!\n>";
 }
 
-void do_buy(struct bankir *b, struct players *p,int i)
-{
-	char num_str[10]="\0",buf[1024]="\0";
-	int amount,price;
-
-	if (p[i].state < 0){
-		add_str(buf,"Sorry but you can't play anymore.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	if (p[i].command[1]==NULL) {
-			add_str(buf,p[i].command[0]);
-			add_str(buf,": wrong command syntax. Must be '");
-			add_str(buf,"buy <amount> <price>'\n>");
-			if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-				printf("write error to fd = %d",p[i].fd);
-			return;
-	} else if (p[i].command[2]==NULL) {
-			add_str(buf,p[i].command[0]);
-			add_str(buf,": wrong command syntax. Must be '");
-			add_str(buf,"buy <amount> <price>'\n>");
-			if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-				printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	amount = atoi(p[i].command[1]);
-	price = atoi(p[i].command[2]);
-	if (amount > b[0].raw_amount || amount <= 0) {
-		add_str(buf,"In this month you can buy from 1 to ");
-		itoa(b[0].raw_amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf," units. Try again.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (price < b[0].raw_price) {
-		add_str(buf,"In this month you have to pay not less than ");
-		itoa(b[0].raw_price,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ for 1 unit. Try again.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (p[i].money - price * amount < 0) {
-		add_str(buf,"Sorry but you don't have enough money to ");
-		add_str(buf,"buy all this stuff. You have ");
-		itoa(p[i].money,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ but you need ");
-		itoa(price*amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ to buy everything you want.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	p[i].buy_amount = amount;
-	p[i].buy_price = price;
-	add_str(buf,"You query to buy ");
-		itoa(amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf," for ");
-		itoa(price,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ was sent to the bank.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-}
-
-void do_sell(struct bankir *b, struct players *p,int i)
-{
-	char num_str[10]="\0",buf[1024]="\0";
-	int amount,price;
-
-	if (p[i].state < 0){
-		add_str(buf,"Sorry but you can't play anymore.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	if (p[i].command[1]==NULL) {
-			add_str(buf,p[i].command[0]);
-			add_str(buf,": wrong command syntax. Must be '");
-			add_str(buf,"sell <amount> <price>'\n>");
-			if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-				printf("write error to fd = %d",p[i].fd);
-			return;
-	} else if (p[i].command[2]==NULL) {
-			add_str(buf,p[i].command[0]);
-			add_str(buf,": wrong command syntax. Must be '");
-			add_str(buf,"sell <amount> <price>'\n>");
-			if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-				printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	amount = atoi(p[i].command[1]);
-	price = atoi(p[i].command[2]);
-	if (amount > b[0].product_amount || amount <= 0) {
-		add_str(buf,"In this month you can sell from 1 to ");
-		itoa(b[0].product_amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf," products. Try again.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (price > b[0].product_price) {
-		add_str(buf,"In this month you can't ask for more than ");
-		itoa(b[0].product_price,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ for 1 product. Try again.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (p[i].product - amount < 0) {
-		add_str(buf,"Sorry but you don't have enough product to ");
-		add_str(buf,"sell. You have ");
-		itoa(p[i].product,num_str);
-		add_str(buf,num_str);
-		add_str(buf," product(s) but\nyou wanted to sell ");
-		itoa(amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf," product(s).\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	p[i].sell_amount = amount;
-	p[i].sell_price = price;
-	add_str(buf,"You query to sell ");
-		itoa(amount,num_str);
-		add_str(buf,num_str);
-		add_str(buf," for ");
-		itoa(price,num_str);
-		add_str(buf,num_str);
-		add_str(buf,"$ was sent to the bank.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-}
-
-void do_prod(struct players *p,int i)
-{
-	int req;
-	char buf[1024]="\0";
-
-	if (p[i].state < 0){
-		add_str(buf,"Sorry but you can't play anymore.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	req = p[i].product_to_make + 1;
-	if (req > p[i].factory) {
-		add_str(buf,"You don't have enough factories to produce.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (req > p[i].raw) {
-		add_str(buf,"You don't have enough raw units to produce.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	if (p[i].money - 2000 < 0){
-		add_str(buf,"You don't have enough money to produce.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	p[i].money -= 2000;
-	p[i].product_to_make = req;
-	add_str(buf,"You've been charged 2000$ for production.\n");
-	add_str(buf,"Product will be done at the end of the month.\n>");
-	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-		printf("write error to fd = %d",p[i].fd);
-}
-
-void do_build(struct players *p,int i)
-{
-	char buf[1024]="\0";
-
-	if (p[i].state < 0){
-		add_str(buf,"Sorry but you can't play anymore.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-			return;
-	}
-	if (p[i].money - 2500 < 0){
-		add_str(buf,"You don't have enough money to build.\n>");
-		if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[i].fd);
-		return;
-	}
-	p[i].money -= 2500;
-	p[i].buildings[5] += 1;
-	add_str(buf,"You've been charged 2500$ for the building.\n");
-	add_str(buf,"The building will reform to a factory on 5th month.\n>");
-	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-		printf("write error to fd = %d",p[i].fd);
-}
 
 //help info for daemon
 void do_help(struct players *p, int i)
@@ -477,36 +272,20 @@ void do_command(struct bankir *b, struct players *p,int i)
 		do_nothing(p,i);
 		return;
 	}
-	if(!strcmp(p[i].command[0],"market")) {
+	if(!strcmp(p[i].command[0],"check")) {
 		do_market(b,p,i);
 		return;
 	}
-	if(!strcmp(p[i].command[0],"info")) {
+	if(!strcmp(p[i].command[0],"encode")) {
 		do_info(b,p,i);
 		return;
 	}
-	if(!strcmp(p[i].command[0],"buy")) {
-		do_buy(b,p,i);
-		return;
-	}
-	if(!strcmp(p[i].command[0],"sell")) {
-		do_sell(b,p,i);
-		return;
-	}
-	if(!strcmp(p[i].command[0],"prod")) {
-		do_prod(p,i);
-		return;
-	}
-	if(!strcmp(p[i].command[0],"turn")) {
+	if(!strcmp(p[i].command[0],"alert")) {
 		do_turn(p,i);
 		return;
 	}
-	if(!strcmp(p[i].command[0],"chat")) {
+	if(!strcmp(p[i].command[0],"decode")) {
 		do_chat(b,p,i);
-		return;
-	}
-	if(!strcmp(p[i].command[0],"build")) {
-		do_build(p,i);
 		return;
 	}
 	if(!strcmp(p[i].command[0],"help")) {
@@ -518,22 +297,6 @@ void do_command(struct bankir *b, struct players *p,int i)
 		return;
 	}
 	do_nothing(p,i);
-}
-
-void new_month_notification(struct bankir *b, struct players *p)
-{
-	char buf[1024]="\0", num[10]="\0";
-	int j;
-	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n");
-	add_str(buf,"|               New month: ");
-	itoa2(b[0].month,num);
-	add_str(buf,num);
-	add_str(buf,"             |\n");
-	add_str(buf,"|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|\n>");
-	for(j=0;j<b[0].players;j++){
-		if (0 >= write(p[j].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[j].fd);
-	}
 }
 
 void command(struct bankir *bank,struct players *p, int i)
@@ -1135,11 +898,9 @@ void before_start(struct bankir *bank, struct players *p)
 	rp = bank[0].raw_price;
 	pa = bank[0].product_amount;
 	pp = bank[0].product_price;
-	printf("  Bank sells %10d raw units for %10d.\n",ra,rp);
-	printf("  Buys       %10d raw units for %10d.\n",pa,pp);
 	print_all(bank,p);
-	add_str(buf,"The game has been started!\n");
-	add_str(buf,"Please enter your name:\n>");
+	add_str(buf,"Daemon has been started!\n");
+	add_str(buf,"Identify yourself\n>");
 	for (i = 0; i < bank[0].players; i++){
 		wc = write(p[i].fd, buf, strlen(buf) + 1);
 		if (wc == -1)
@@ -1289,7 +1050,7 @@ int main(int argc,char **argv)
 	struct bankir bank = {0,3,1,0,0,0};
 
 	bank.max = atoi(argv[1]);
-	printf("Server is ready. Maximum number of players is %d\n",bank.max);
+	printf("Server is ready. Maximum number of sockets is %d\n",bank.max);
 	bank.ls = start_listen(atoi(argv[2]));
 	for (;;) {
 		if (all_turn(&bank,player) && active_players(&bank,player)){
@@ -1302,14 +1063,13 @@ int main(int argc,char **argv)
 			bank.month += 1;
 			level(&bank);
 			bank_update(&bank,player);
-			printf("\nMonth %d. Level %d.\n",bank.month,bank.level);
 			print_all(&bank,player);
 			new_month_notification(&bank,player);
 			bankruptcy_control(&bank,player);
 			turn_new(&bank,player);
 			winner_control(&bank,player);
 			if (!active_players(&bank,player))
-				printf("****GAME OVER****\n");
+				printf("****Deamon OVER****\n");
 		}
 		before_start(&bank,player);
 		my_select(&bank,player);
