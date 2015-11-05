@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <netinet/in.h>
+#include <netinet/in.h> // For OS X and Linux. Doesn't need for Free BSD
 
 struct bankir {
 	int start;
@@ -213,126 +213,21 @@ int active_players(struct bankir *b, struct players *p)
 	return s;
 }
 
-void do_market(struct bankir *b, struct players *p, int i)
+void do_check(struct bankir *b, struct players *p, int i)
 {
-	char num_str[10]="\0",buf[1024]="\0";
-
-	add_str(buf,"Current month:    ");
-	itoa(b[0].month,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Players still active:\n");
-	add_str(buf,"%                     ");
-	itoa(active_players(b,p),num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Bank sells: items    min.price\n");
-	add_str(buf,"%           ");
-	itoa(b[0].raw_amount,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"         ");
-	itoa(b[0].raw_price,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Bank buys:  items    max.price\n");
-	add_str(buf,"%           ");
-	itoa(b[0].product_amount,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"         ");
-	itoa(b[0].product_price,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n>");
-	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-		printf("write error to fd = %d",p[i].fd);
 }
 
-void do_info(struct bankir *b, struct players *p,int i)
+void do_encode(struct bankir *b, struct players *p,int i)
 {
-	char num_str[10]="\0",buf[1024]="\0";
-	int n,j,no_buildings=1;
-
-	if (p[i].command[1]!=NULL) {
-		if ((n = atoi(p[i].command[1])) > b[0].players || n < 1) {
-			add_str(buf,"Can't get info about ");
-			add_str(buf,p[i].command[1]);
-			add_str(buf," player.\n>");
-			if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-				printf("write error to fd = %d",p[i].fd);
-			return;
-		} else {
-			n -= 1;
-		}
-	} else {
-		n = i;
-	}
-	add_str(buf,"****    Information about ");
-	add_str(buf,p[n].name);
-	add_str(buf,"    ****\n");
-	add_str(buf,"Money:        ");
-	itoa(p[n].money,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Raw units:    ");
-	itoa(p[n].raw,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Products:     ");
-	itoa(p[n].product,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Factories:    ");
-	itoa(p[n].factory,num_str);
-	add_str(buf,num_str);
-	add_str(buf,"\n");
-	add_str(buf,"Buildings:    ");
-	for (j=5; j>=1; j--) {
-		if (p[n].buildings[j]!= 0) {
-			no_buildings = 0;
-			itoa(p[n].buildings[j],num_str);
-			add_str(buf,num_str);
-			add_str(buf,"(months left: ");
-			itoa(j,num_str);
-			add_str(buf,num_str);
-			add_str(buf,")  ");
-		}
-	}
-	if (no_buildings)
-		add_str(buf,"0");
-	add_str(buf,"\n>");
-	if (0 >= write(p[i].fd,buf,strlen(buf)+1))
-		printf("write error to fd = %d",p[i].fd);
 }
 
-void do_chat(struct bankir *b, struct players *p,int i)
+void do_decode(struct bankir *b, struct players *p,int i)
 {
-	char buf[1024]="\0";
-	int j;
-
-	add_str(buf,p[i].name);
-	add_str(buf," says: [ ");
-	for (j=1; p[i].command[j]!= '\0'; j++){
-		add_str(buf,p[i].command[j]);
-		add_str(buf," ");
-	}
-	add_str(buf,"]\n>");
-	for(j=0;j<b[0].players;j++){
-		if (0 >= write(p[j].fd,buf,strlen(buf)+1))
-			printf("write error to fd = %d",p[j].fd);
-	}
 }
 
-void do_turn(struct players *p,int i)
+void do_alert(struct players *p,int i)
 {
-	const char buf1[] = "End of your turn. Waiting for other players...\n>";
-	const char buf2[] = "Sorry but you can't play anymore.\n>";
-	if (p[i].state < 0){
-		if (0 >= write(p[i].fd,buf2,strlen(buf2)+1))
-			printf("write error to fd = %d",p[i].fd);
-	} else {
-		p[i].turn = 1;
-		if (0 >= write(p[i].fd,buf1,strlen(buf1)+1))
-			printf("write error to fd = %d",p[i].fd);
-	}
+	const char buf1[] = "USB was removed!\n>";
 }
 
 void do_buy(struct bankir *b, struct players *p,int i)
