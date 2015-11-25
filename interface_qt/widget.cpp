@@ -2,8 +2,10 @@
 #include "ui_widget.h"
 #include <QString>
 #include <iostream>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <vector>
 #include <stdio.h>
@@ -16,6 +18,13 @@
 using std::cout;
 using std::endl;
 using std::vector;
+
+
+void error_detected(const char * s)
+{
+    perror(s);
+    exit(1);
+}
 
 char *getlineunlim()                                 //функция считывает строку до \n
 {
@@ -119,8 +128,31 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
 
 void makemasterkey(vector<char*> &data,QString log,QString pin){};
 
+void make_socket(char *line,char *str, char * res)
+{
+    struct sockaddr_in addr;
+    int ls,i;
+    int port = 1200;
+    ls = socket(AF_INET,SOCK_STREAM, 0);
+    if (ls == -1)
+        error_detected("ls");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
+        error_detected("connect");
+    write(ls, line, strlen(line)+1);
+    write(ls, str, strlen(str)+1);
+    i = 0;
+    do {
+    if (read(ls, res+i, 1) == 0) printf("read error\n");
+    }
+    while(res[i++] != '\0');
+    close(ls);
+}
 
 vector <char*> data_usb(2),check(2);
+
 void Widget::EventHandler_for_button1(void)
 {
    int flag;
@@ -135,17 +167,38 @@ void Widget::EventHandler_for_button1(void)
 
 void Widget::EventHandler_for_button2(void)
 {
-   ui->textEdit_2->setText("File was successfully encoded");
+   char *line = "encode\0";
+   QString tfile=ui->textEdit->toPlainText();
+   QByteArray qb = tfile.toUtf8();
+   char *str = qb.data();
+   char *res = new char[5];
+   make_socket(line,str,res);
+   if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully encoded");
+   else ui->textEdit_2->setText("File wasnot encoded");
 }
 
 void Widget::EventHandler_for_button3(void)
 {
-   ui->textEdit_2->setText("File was successfully decoded");
+    char *line = "decode\0";
+    QString tfile=ui->textEdit->toPlainText();
+    QByteArray qb = tfile.toUtf8();
+    char *str = qb.data();
+    char *res = new char[5];
+    make_socket(line,str,res);
+    if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully decoded");
+    else ui->textEdit_2->setText("File wasnot decoded");
 }
 
 void Widget::EventHandler_for_button4(void)
 {
-   ui->textEdit_2->setText("File was successfully deleted");
+    char *line = "delete\0";
+    QString tfile=ui->textEdit->toPlainText();
+    QByteArray qb = tfile.toUtf8();
+    char *str = qb.data();
+    char *res = new char[5];
+    make_socket(line,str,res);
+    if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully deleted");
+    else ui->textEdit_2->setText("File wasnot decoded");
 }
 
 void Widget::EventHandler_for_button5(void)
