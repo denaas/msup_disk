@@ -11,7 +11,7 @@
 
 struct info_struct {
 	int key;
-	int ls;
+    int ls,fd;
 	int x;
 	fd_set readfds;	
 };
@@ -119,47 +119,88 @@ int word_length(char *s)
 	return i;
 }
 
-void do_delete(struct info_struct *b,int fd)
+void do_delete(struct info_struct *b)
 {
     int i = 0;
     char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
     do {
-    if (read(fd, str+i, 1) == 0) printf("read error\n");
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
     }
     while(str[i++] != '\0');
-    std::cout<<str<<std::endl;
-     //код для работы функции здесь, если ошибка возвращать не окей
-    strcpy(str,"Okey\0");
-    write(fd,str,strlen(str)+1);
-}
-
-void do_encode(struct info_struct *b,int fd)
-{
-    int i = 0;
-    char * str  = new char[100];
-    //std::cout<<"tut"<<std::endl;
+    i = 0;
     do {
-    if (read(fd, str+i, 1) == 0) printf("read error\n");
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
     }
-    while(str[i++] != '\0');
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
      //код для работы функции здесь, если ошибка возвращать не окей
     strcpy(str,"Okey\0");
-    write(fd,str,strlen(str)+1);
+    write(b->fd,str,strlen(str)+1);
 }
 
-void do_decode(struct info_struct *b,int fd)
+void do_encode(struct info_struct *b)
 {
     int i = 0;
     char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
     do {
-    if (read(fd, str+i, 1) == 0) printf("read error\n");
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
     }
     while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
+    }
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
      //код для работы функции здесь, если ошибка возвращать не окей
     strcpy(str,"Okey\0");
-    write(fd,str,strlen(str)+1);
+    write(b->fd,str,strlen(str)+1);
+}
+
+void do_decode(struct info_struct *b)
+{
+    int i = 0;
+    char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
+    do {
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    }
+    while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
+    }
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
+    std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
+     //код для работы функции здесь, если ошибка возвращать не окей
+    strcpy(str,"Okey\0");
+    write(b->fd,str,strlen(str)+1);
 }
 
 void do_alert()
@@ -169,17 +210,17 @@ void do_alert()
 }
 
 
-void do_command(struct info_struct *b, char * cmd,int fd)
+void do_command(struct info_struct *b, char * cmd)
 {
 	if(!strcmp(cmd,"\0")) {
 		return;
 	}
     if(!strcmp(cmd,"delete")) {
-        do_delete(b,fd);
+        do_delete(b);
 		return;
 	}
 	if(!strcmp(cmd,"encode")) {
-        do_encode(b,fd);
+        do_encode(b);
 		return;
 	}
 	if(!strcmp(cmd,"alert")) {
@@ -187,7 +228,7 @@ void do_command(struct info_struct *b, char * cmd,int fd)
 		return;
 	}
 	if(!strcmp(cmd,"decode")) {
-        do_decode(b,fd);
+        do_decode(b);
 		return;
 	}
 }
@@ -247,12 +288,13 @@ int main(int argc,char **argv)
         alen = sizeof(addr);
         if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){std::cout<<"tuagat"<<std::endl;
             error_detected("accept");}
+        all_info.fd = fd;
         i = 0;
         do {
         if (read(fd, str+i, 1) == 0) printf("read error\n");
         }
         while(str[i++] != '\0');
-        do_command(&all_info,str,fd);
+        do_command(&all_info,str);
         if (read(fd, str, 1) == 0) close(fd);
 
 	}
