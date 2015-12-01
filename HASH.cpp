@@ -12,7 +12,7 @@
 
 using namespace std;
 
-int do_hash(char* infile)/*функция, создающая файл:хеши-блоки данных*/
+int do_hash_for_file(char* infile,int id)/*функция, создающая файл:хеши-блоки данных*/
 {
 	
 	FILE *inf, *tmp;
@@ -24,9 +24,9 @@ int do_hash(char* infile)/*функция, создающая файл:хеши-
 	unsigned int md_len; /* размер вычисленного хэша */ 
 	inf = fopen(infile,"r+");/* В командной строке передаем имя файла, для которого вычисляется хэш */
 	tmp = fopen("tmp.txt","w+");
-	OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
-	md = EVP_get_digestbyname("sha256");/* Получаем адреса функций алгоритма MD5 и инициализируем контекст для вычисления хэша */
-	
+	//OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
+	md = EVP_get_digestbynid(id);/* Получаем адреса функций алгоритма SHA256 и инициализируем контекст для вычисления хэша */
+	//cout<<md->type<<endl;
 	size_t read;
 	/* Вычисляем хэш */
 	for(;;) 
@@ -57,7 +57,7 @@ int do_hash(char* infile)/*функция, создающая файл:хеши-
 	return 0;	
 }
 
-bool check_hash(char*infile)/*функция, проверяющая целостность данных*/
+bool check_hash_for_file(char*infile,int id)/*функция, проверяющая целостность данных*/
 {
 	FILE *inf, *tmp;
 	char *mas;
@@ -69,8 +69,8 @@ bool check_hash(char*infile)/*функция, проверяющая целос�
 	unsigned int md_len; /* размер вычисленного хэша */ 
 	 /* В командной строке передаем имя файла, для которого вычисляется хэш */
 	inf = fopen(infile,"r+");
-	OpenSSL_add_all_digests();
-	md = EVP_get_digestbyname("sha256");
+	//OpenSSL_add_all_digests();
+	md = EVP_get_digestbynid(id);
 	int count = 0;
 	for(;;) 
 	{
@@ -87,7 +87,7 @@ bool check_hash(char*infile)/*функция, проверяющая целос�
 		EVP_DigestFinal(&mdctx, md_value, &md_len);
 		EVP_MD_CTX_cleanup(&mdctx); 
 		count = 0;
-		if (count = memcmp(buf2,md_value,32)) 
+		if (count = memcmp(buf2,md_value,BUFSIZE2)) 
 		{
 			return 0;
 		}
@@ -98,50 +98,16 @@ bool check_hash(char*infile)/*функция, проверяющая целос�
 
 }
 
-int do_hash2(char*infile)/*функция, записывающая вместо данных хеш*/
-{
-	FILE *inf;
-	unsigned char buf[BUFSIZE];
-	EVP_MD_CTX mdctx; /* контекст для вычисления хэша */
-	const EVP_MD * md; /* структура с адресами функций алгоритма */
-	unsigned char md_value[EVP_MAX_MD_SIZE];
-	unsigned int md_len; /* размер вычисленного хэша */ 
-	inf = fopen(infile,"r+");/* В командной строке передаем имя файла, для которого вычисляется хэш */
-	OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
-	md = EVP_get_digestbyname("sha256");/* Получаем адреса функций алгоритма MD5 и инициализируем контекст для вычисления хэша */
-	
-	size_t read;
-	/* Вычисляем хэш */
-	for(;;) 
-	{
-		for(int i=0; i<BUFSIZE; ++i)
-		buf[i]='\0';
-		int i = fread(buf,1, BUFSIZE-1,inf);
-		if(i <= 0) break;
-		EVP_DigestInit(&mdctx, md);
-		EVP_DigestUpdate(&mdctx, buf, (unsigned long)i);
-		EVP_DigestFinal(&mdctx, md_value, &md_len);
-		EVP_MD_CTX_cleanup(&mdctx);
-		
 
-	}
-	fclose(inf);
-	inf = fopen(infile,"w+");
-	fwrite(md_value,1, md_len,inf);
-		
-	fclose(inf);
-	return 0;	
-}
-
-void do_hash3(const char*a, unsigned char*mas)//выдает хеш строчки
+void do_hash_for_str(const char*a, unsigned char*mas,int id)//функция,создающая хеш для строки
 {
 	
 	EVP_MD_CTX mdctx; /* контекст для вычисления хэша */
 	const EVP_MD * md; /* структура с адресами функций алгоритма */
 	unsigned char md_value[EVP_MAX_MD_SIZE];
 	unsigned int md_len; /* размер вычисленного хэша */ 
-	OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
-	md = EVP_get_digestbyname("sha256");/* Получаем адреса функций алгоритма MD5 и инициализируем контекст для вычисления хэша */
+	//OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
+	md = EVP_get_digestbynid(id);/* Получаем адреса функций алгоритма SHA256 и инициализируем контекст для вычисления хэша */
 	
 	/* Вычисляем хэш */
 		EVP_DigestInit(&mdctx, md);
@@ -149,22 +115,24 @@ void do_hash3(const char*a, unsigned char*mas)//выдает хеш строчк
 		EVP_DigestFinal(&mdctx, md_value, &md_len);
 		EVP_MD_CTX_cleanup(&mdctx);
 
-		for(int i=0; i<32; ++i)
+		for(int i=0; i<BUFSIZE2; ++i)
 			mas[i]=md_value[i];	
 }
 
 int main(int argc, char**argv)
 { 
-	unsigned char mas[32];
-	FILE*in;
+	OpenSSL_add_all_digests();
+	unsigned char mas[BUFSIZE2];
+	//const char*a="BBByyyuh";
+	const EVP_MD *md = EVP_get_digestbyname("sha256");
+	int nid=md->type;
 
-	//Нахождение хеша для файла(строчки в файле) и считывание его в буфер
-	do_hash2(argv[1]);
-	in=fopen(argv[1],"r+");
-	int k= fread(mas,1, 32,in);
-
-	do_hash(argv[1]);
-	if (check_hash(argv[1])) cout<<"OK"<<endl;
+	//do_hash_for_str(a,mas,nid);
+	//for(int i=0; i<BUFSIZE2; ++i)
+		//cout<<mas[i];
+	//cout<<endl;
+	do_hash_for_file(argv[1],nid);
+	if (check_hash_for_file(argv[1], nid)) cout<<"OK"<<endl;
 	else cout<<"FAIL"<<endl;
 	return 0;
 } 
