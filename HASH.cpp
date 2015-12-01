@@ -133,6 +133,26 @@ int do_hash2(char*infile)/*функция, записывающая вместо
 	return 0;	
 }
 
+void do_hash3(const char*a, unsigned char*mas)//выдает хеш строчки
+{
+	
+	EVP_MD_CTX mdctx; /* контекст для вычисления хэша */
+	const EVP_MD * md; /* структура с адресами функций алгоритма */
+	unsigned char md_value[EVP_MAX_MD_SIZE];
+	unsigned int md_len; /* размер вычисленного хэша */ 
+	OpenSSL_add_all_digests();/* Добавляем алгоритмы хэширования во внутреннюю таблицу библиотеки */
+	md = EVP_get_digestbyname("sha256");/* Получаем адреса функций алгоритма MD5 и инициализируем контекст для вычисления хэша */
+	
+	/* Вычисляем хэш */
+		EVP_DigestInit(&mdctx, md);
+		EVP_DigestUpdate(&mdctx, a, (unsigned long)sizeof(a));
+		EVP_DigestFinal(&mdctx, md_value, &md_len);
+		EVP_MD_CTX_cleanup(&mdctx);
+
+		for(int i=0; i<32; ++i)
+			mas[i]=md_value[i];	
+}
+
 int main(int argc, char**argv)
 { 
 	unsigned char mas[32];
@@ -142,6 +162,7 @@ int main(int argc, char**argv)
 	do_hash2(argv[1]);
 	in=fopen(argv[1],"r+");
 	int k= fread(mas,1, 32,in);
+
 	do_hash(argv[1]);
 	if (check_hash(argv[1])) cout<<"OK"<<endl;
 	else cout<<"FAIL"<<endl;
