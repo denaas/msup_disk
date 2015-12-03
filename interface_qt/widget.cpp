@@ -2,8 +2,10 @@
 #include "ui_widget.h"
 #include <QString>
 #include <iostream>
+#include <netinet/in.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <vector>
 #include <stdio.h>
@@ -16,6 +18,16 @@
 using std::cout;
 using std::endl;
 using std::vector;
+
+int cnopca = 0;
+char * log = new char[100];
+char * pin = new char[100];
+
+void error_detected(const char * s)
+{
+    perror(s);
+    exit(1);
+}
 
 char *getlineunlim()                                 //функция считывает строку до \n
 {
@@ -117,12 +129,38 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
     }
 }
 
-void makemasterkey(vector<char*> &data,QString log,QString pin){};
+void makemasterkey(vector<char*> &data){};
 
+void make_socket(char *line,char *str, char * res)
+{
+    struct sockaddr_in addr;
+    int ls,i;
+    int port = 1200;
+    ls = socket(AF_INET,SOCK_STREAM, 0);
+    if (ls == -1)
+        error_detected("ls");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
+        error_detected("connect");
+    write(ls, line, strlen(line)+1);
+    write(ls, str, strlen(str)+1);
+    write(ls, log, strlen(log)+1);
+    write(ls, pin, strlen(pin)+1);
+    i = 0;
+    do {
+    if (read(ls, res+i, 1) == 0) printf("read error\n");
+    }
+    while(res[i++] != '\0');
+    close(ls);
+}
 
 vector <char*> data_usb(2),check(2);
+
 void Widget::EventHandler_for_button1(void)
 {
+   cnopca = 1;
    int flag;
    flag = count_USB();
    if (flag == 1) {
@@ -135,52 +173,125 @@ void Widget::EventHandler_for_button1(void)
 
 void Widget::EventHandler_for_button2(void)
 {
-   ui->textEdit_2->setText("File was successfully encoded");
+   cnopca = 2;
+   ui->widget_2->setVisible(false);
+   ui->widget->setVisible(true);
 }
 
 void Widget::EventHandler_for_button3(void)
 {
-   ui->textEdit_2->setText("File was successfully decoded");
+    cnopca = 3;
+    ui->widget_2->setVisible(false);
+    ui->widget->setVisible(true);
 }
 
 void Widget::EventHandler_for_button4(void)
 {
-   ui->textEdit_2->setText("File was successfully deleted");
+    cnopca = 4;
+    ui->widget_2->setVisible(false);
+    ui->widget->setVisible(true);
 }
 
 void Widget::EventHandler_for_button5(void)
 {
-    //здесь код для создания мастерключа, работает на кнопку "ок"
-    int flag = 0;
-    QString  log,pin ;
-    flag = count_USB();
-    if (flag == 1) {
-        takeusbinf(check);
-        if (!strcmp(data_usb[0],check[0]) && !strcmp(data_usb[1],check[1]))  {
-            /*cout<<data_usb[0]<<endl;
-            cout<<data_usb[1]<<endl;
-            cout<<check[0]<<endl;
-            cout<<check[1]<<endl;*/
-            log = ui->lineEdit_3->text();
-            pin = ui->lineEdit_4->text();
-            makemasterkey(data_usb,log,pin);
-            ui->textEdit_2->setText("Masterkey was successfully created");
+    if (cnopca == 1) {
+        //здесь код для создания мастерключа, работает на кнопку "ок"
+        int flag = 0;
+        QString  log,pin;
+        flag = count_USB();
+        if (flag == 1) {
+            takeusbinf(check);
+            if (!strcmp(data_usb[0],check[0]) && !strcmp(data_usb[1],check[1]))  {
+                /*cout<<data_usb[0]<<endl;
+                cout<<data_usb[1]<<endl;
+                cout<<check[0]<<endl;
+                cout<<check[1]<<endl;*/
+                QString helpl=ui->lineEdit_3->text();
+                QByteArray ql = helpl.toUtf8();
+                log = ql.data();
+                QString helpp=ui->lineEdit_4->text();
+                QByteArray qp = helpp.toUtf8();
+                pin = qp.data();
+                makemasterkey(data_usb);
+                ui->textEdit_2->setText("Masterkey was successfully created");
+            }
+            else ui->textEdit_2->setText("Masterkey has not been created, because you changed USB");
+            ui->widget->setVisible(false);
+            ui->widget_2->setVisible(true);
         }
-        else ui->textEdit_2->setText("Masterkey has not been created, because you changed USB");
+        else {
+            if (flag == 0) ui->textEdit_2->setText("Masterkey has not been created,\n because there is no USB drive inserted");
+            else ui->textEdit_2->setText("Masterkey has not been created,\n because there is more than one USB drive inserted");
+            ui->widget->setVisible(false);
+            ui->widget_2->setVisible(true);
+        }
+   }
+   else if (cnopca == 2){
+        QString helpl=ui->lineEdit_3->text();
+        QByteArray ql = helpl.toUtf8();
+        log = ql.data();
+        QString helpp=ui->lineEdit_4->text();
+        QByteArray qp = helpp.toUtf8();
+        pin = qp.data();
+        char *line = "encode\0";
+        QString tfile=ui->textEdit->toPlainText();
+        QByteArray qb = tfile.toUtf8();
+        char *str = qb.data();
+        char *res = new char[5];
+        make_socket(line,str,res);
+        if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully encoded");
+        else ui->textEdit_2->setText("File wasnot encoded");
+        delete []res;
         ui->widget->setVisible(false);
         ui->widget_2->setVisible(true);
+   }
+    else if (cnopca == 3){
+         QString helpl=ui->lineEdit_3->text();
+         QByteArray ql = helpl.toUtf8();
+         log = ql.data();
+         QString helpp=ui->lineEdit_4->text();
+         QByteArray qp = helpp.toUtf8();
+         pin = qp.data();
+         char *line = "decode\0";
+         QString tfile=ui->textEdit->toPlainText();
+         QByteArray qb = tfile.toUtf8();
+         char *str = qb.data();
+         char *res = new char[5];
+         make_socket(line,str,res);
+         if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully decoded");
+         else ui->textEdit_2->setText("File wasnot decoded");
+         delete [] res;
+         ui->widget->setVisible(false);
+         ui->widget_2->setVisible(true);
     }
     else {
-        if (flag == 0) ui->textEdit_2->setText("Masterkey has not been created,\n because there is no USB drive inserted");
-        else ui->textEdit_2->setText("Masterkey has not been created,\n because there is more than one USB drive inserted");
-        ui->widget->setVisible(false);
-        ui->widget_2->setVisible(true);
+         QString helpl=ui->lineEdit_3->text();
+         QByteArray ql = helpl.toUtf8();
+         log = ql.data();
+         QString helpp=ui->lineEdit_4->text();
+         QByteArray qp = helpp.toUtf8();
+         pin = qp.data();
+         char *line = "delete\0";
+         QString tfile=ui->textEdit->toPlainText();
+         QByteArray qb = tfile.toUtf8();
+         char *str = qb.data();
+         char *res = new char[5];
+         make_socket(line,str,res);
+         if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully deleted");
+         else ui->textEdit_2->setText("File wasnot deleted");
+         delete []res;
+         ui->widget->setVisible(false);
+         ui->widget_2->setVisible(true);
     }
+
 }
 
 void Widget::EventHandler_for_button6(void)
 {
-    ui->textEdit_2->setText("Masterkey has not been created");
+    if (cnopca == 1)ui->textEdit_2->setText("Masterkey has not been created");
+    else if (cnopca == 2) ui->textEdit_2->setText("File wasnot encoded");
+    else if (cnopca == 3) ui->textEdit_2->setText("File wasnot decoded");
+    else ui->textEdit_2->setText("File wasnot deleted");
     ui->widget->setVisible(false);
     ui->widget_2->setVisible(true);
 }

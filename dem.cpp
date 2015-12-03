@@ -6,11 +6,12 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 #include <netinet/in.h> // For OS X and Linux. Doesn't need for Free BSD
 
 struct info_struct {
 	int key;
-	int ls;
+    int ls,fd;
 	int x;
 	fd_set readfds;	
 };
@@ -118,16 +119,88 @@ int word_length(char *s)
 	return i;
 }
 
-void do_check(struct info_struct *b)
+void do_delete(struct info_struct *b)
 {
+    int i = 0;
+    char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
+    do {
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    }
+    while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
+    }
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
+    std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
+     //код для работы функции здесь, если ошибка возвращать не окей
+    strcpy(str,"Okey\0");
+    write(b->fd,str,strlen(str)+1);
 }
 
 void do_encode(struct info_struct *b)
 {
+    int i = 0;
+    char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
+    do {
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    }
+    while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
+    }
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
+    std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
+     //код для работы функции здесь, если ошибка возвращать не окей
+    strcpy(str,"Okey\0");
+    write(b->fd,str,strlen(str)+1);
 }
 
 void do_decode(struct info_struct *b)
 {
+    int i = 0;
+    char * str = new char[100];
+    char * log = new char[100];
+    char * pin = new char[100];
+    do {
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    }
+    while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
+    }
+    while(log[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
+    std::cout<<str<<std::endl;
+    std::cout<<log<<std::endl;
+    std::cout<<pin<<std::endl;
+     //код для работы функции здесь, если ошибка возвращать не окей
+    strcpy(str,"Okey\0");
+    write(b->fd,str,strlen(str)+1);
 }
 
 void do_alert()
@@ -137,17 +210,17 @@ void do_alert()
 }
 
 
-void do_command(struct info_struct *b, char * cmd, int i)
+void do_command(struct info_struct *b, char * cmd)
 {
 	if(!strcmp(cmd,"\0")) {
 		return;
 	}
-	if(!strcmp(cmd,"check")) {
-		do_check(b);
+    if(!strcmp(cmd,"delete")) {
+        do_delete(b);
 		return;
 	}
 	if(!strcmp(cmd,"encode")) {
-		do_encode(b);
+        do_encode(b);
 		return;
 	}
 	if(!strcmp(cmd,"alert")) {
@@ -155,7 +228,7 @@ void do_command(struct info_struct *b, char * cmd, int i)
 		return;
 	}
 	if(!strcmp(cmd,"decode")) {
-		do_decode(b);
+        do_decode(b);
 		return;
 	}
 }
@@ -172,20 +245,19 @@ void print_old(int old)
 
 int start_listen(int port)
 {
-	struct sockaddr_in addr;	
-	int ls, opt = 1;
-
-	ls = socket(AF_INET,SOCK_STREAM, 0);
-	if (ls == -1)
-		error_detected("ls");
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(port);
-	addr.sin_addr.s_addr = INADDR_ANY;
-	setsockopt(ls,SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-	if (0 != bind(ls, (struct sockaddr *) &addr, sizeof(addr)))
-		error_detected("bind");
-	if (-1 == listen(ls,5))
-		error_detected("listen");
+    struct sockaddr_in addr;
+    int ls, opt = 1;
+    ls = socket(AF_INET,SOCK_STREAM, 0);
+    if (ls == -1)
+        error_detected("ls");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    addr.sin_addr.s_addr = INADDR_ANY;
+    setsockopt(ls,SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (0 != bind(ls, (struct sockaddr *) &addr, sizeof(addr)))
+        error_detected("bind");
+    if (-1 == listen(ls,5))
+        error_detected("listen");
 	return ls;
 }
 
@@ -204,12 +276,27 @@ void before_start(struct info_struct *b)
 int main(int argc,char **argv)
 {
 	struct info_struct all_info;
-
+    struct sockaddr_in addr;
+    int fd,i;
+    char  *str = new char[10];
+    socklen_t alen;
 	int max1 = 1;
 	printf("Server is ready. Maximum number of sockets is %d\n",max1);
-	all_info.ls = start_listen(atoi(argv[2]));
-	before_start(&all_info);
+    all_info.ls = start_listen(atoi(argv[2]));
+    //before_start(&all_info);
 	for (;;) {
+        alen = sizeof(addr);
+        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){std::cout<<"tuagat"<<std::endl;
+            error_detected("accept");}
+        all_info.fd = fd;
+        i = 0;
+        do {
+        if (read(fd, str+i, 1) == 0) printf("read error\n");
+        }
+        while(str[i++] != '\0');
+        do_command(&all_info,str);
+        if (read(fd, str, 1) == 0) close(fd);
+
 	}
 	return 0;
 }
