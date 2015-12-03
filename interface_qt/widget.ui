@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>TrueCrypt</string>
+   <string>TrueCrypt - code disk</string>
   </property>
   <widget class="QWidget" name="widget" native="true">
    <property name="geometry">
@@ -34,6 +34,9 @@
       <height>61</height>
      </rect>
     </property>
+    <property name="text">
+     <string>Enter login</string>
+    </property>
    </widget>
    <widget class="QLineEdit" name="lineEdit_4">
     <property name="geometry">
@@ -43,6 +46,9 @@
       <width>281</width>
       <height>61</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>Enter pin</string>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_5">
