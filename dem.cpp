@@ -10,6 +10,8 @@
 #include <netinet/in.h> // For OS X and Linux. Doesn't need for Free BSD
 #include "header.h"
 
+ACTION GLOBAL;
+
 void reverse(char s[])
 {
 	int i, j;
@@ -121,6 +123,29 @@ char* ACTION::rasshifrovat(char *adr){}//расшифровывает файл(�
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
+
+
+void repeat_function(int s)
+{
+    int flag = 0;
+    ACTION help;
+    flag = help.count_USB();
+    if (flag == 1) {
+        help.takeusbinf();
+        if (!strcmp(help.token.label,GLOBAL.token.label) && !strcmp(help.token.UID,GLOBAL.token.UID))  {
+            alarm(5);
+            signal(SIGALRM, repeat_function);
+        }
+        else help.do_alert();
+    }
+    else {
+        help.do_alert();
+    }
+}
+
+
+
+
 
 void ACTION::do_delete(struct info_struct *b)
 {
