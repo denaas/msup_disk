@@ -71,15 +71,6 @@ void error_detected(const char * s)
 	exit(1);
 }
 
-int is_n(char *s)
-{
-	int i;
-	for (i = 0; s[i]; i++)
-		if (s[i] == '\n')
-			return 1;
-	return 0;
-}
-
 int count_words(char *s)
 {
 	int i,out=1,nw=0;
@@ -275,20 +266,20 @@ void ACTION::do_alert()
 }
 
 
-void ACTION::do_command(struct info_struct *b, char * cmd)
+void ACTION::do_command(struct info_struct *b)
 {
-	if(!strcmp(cmd,"\0")) {
+	if(*cmd) {
 		return;
 	}
-    if(!strcmp(cmd,"delete\0")) {
+    if(!strcmp(cmd,"delete")) {
         do_delete(b);
 		return;
 	}
-    if(!strcmp(cmd,"encode\0")) {
+    if(!strcmp(cmd,"encode")) {
         do_encode(b);
 		return;
 	}
-    if(!strcmp(cmd,"alert\0")) {
+    if(!strcmp(cmd,"alert")) {
 		do_alert();
 		return;
 	}
@@ -299,9 +290,9 @@ void print_new(int n)
 	printf("New client with fd = %d has been connected!\n",n);
 }
 
-void print_old(int old)
+void print_old(int old, int n)
 {
-	printf("A client with fd = %d has been disconnected!\n",old);
+	printf("A client with fd = %d has been disconnected! Number of connections: %d\n",old,n);
 }
 
 int start_listen(int port)
@@ -334,37 +325,52 @@ void before_start(struct info_struct *b)
 		error_detected("write");
 }
 
-int *add_sfd(int *arr, int *size, int sfd)
+int read_client(ACTION &c)
 {
-	return NULL;
+		int rr;
+		int pos = c.pos;
+
+		rr = read(c.fd, c.cmd+pos, sizeof(c.cmd) - pos - 1);
+		if (rr == -1)
+			error_detected("read");
+		if (rr == 0)
+			return 0;
+		pos+=rr;
+		c.pos = pos;
+		c.cmd[pos] = '\0';
+		return rr;
+}
+
+bool is_n(char *s)
+{
+	for (int i = 0; s[i]; i++)
+		if (s[i] == '\n')
+			return true;
+	return false;
 }
 
 int main(int argc,const char **argv)
 {
 	struct info_struct all_info;
-	int *sfd_arr = NULL, sfd_size = 0;
 	int port = atoi(argv[1]);
-	char  buf[1024];
 	std::vector<ACTION> client;
 
 	ACTION TrueCrypt;
 	
     int ls = start_listen(port);
     all_info.ls = ls; //listening socket
-	printf("%d\n",ls);
 	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
     //before_start(&all_info);
 	//all_info.fd = fd;
 	for (;;) { 		//MAIN LOOP
-		printf("$\n");
 		int max_d = ls;
 		fd_set readfds;
 		FD_ZERO(&readfds);
 		FD_SET(ls, &readfds);
-		for (int i = 0; i < sfd_size; i++){
-			FD_SET(sfd_arr[i], &readfds);
-			if (sfd_arr[i] > max_d)
-				max_d = sfd_arr[i];
+		for (int i = 0; i < client.size(); i++){
+			FD_SET(client[i].fd, &readfds);
+			if (client[i].fd > max_d)
+				max_d = client[i].fd;
 		}
 		int res = select(max_d + 1, &readfds, NULL, NULL, NULL);
 		if (res < 1) {
@@ -376,21 +382,24 @@ int main(int argc,const char **argv)
 		}
 		if (FD_ISSET(ls, &readfds)) {
 			int sfd = accept(ls,0,0);
-			sfd_arr = add_sfd(sfd_arr, &sfd_size, sfd);
+			client.insert(client.end(), ACTION(sfd));
 			print_new(sfd);
 		}
-		for (int i = 0; i < sfd_size; i++ ) {
-			if (FD_ISSET(sfd_arr[i], &readfds)) {
-				int rr = read(sfd_arr[i], buf, sizeof(buf) - 1);
-				if (rr == -1)
-					error_detected("read");
-				if (rr == 0 ) {
-					shutdown(sfd_arr[i],2);
-					close(sfd_arr[i]);
-					print_old(sfd_arr[i]);
+		for (int i = 0; i < client.size(); i++ ) {
+			if (FD_ISSET(client[i].fd, &readfds)) {
+				int rr = read_client(client[i]);
+				if (rr == 0) {
+					shutdown(client[i].fd,2);
+					close(client[i].fd);
+					print_old(client[i].fd, client.size()-1);
+					client.erase(client.begin() + i);
 				} else {
-					buf[rr] = '\0';
-					client[i].do_command(&all_info,buf);
+						printf("Client%d (fd = %d) wrote: %s",i+1,client[i].fd,client[i].cmd);
+					if (is_n(client[i].cmd)){
+						client[i].do_command(&all_info);
+						client[i].cmd[0]='\0';
+						client[i].pos=0;
+					}
 				}
 			}
 		}
