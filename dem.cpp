@@ -26,18 +26,7 @@ void reverse(char s[])
 
 void itoa(int n, char s[])
 {
-	int i,sign;
-	
-	if ((sign = n) < 0)
-		n = -n;
-	i = 0;
-	do {
-		s[i++] = n %10 + '0';
-	} while ((n /= 10)> 0);
-	if (sign < 0)
-		s[i++] = '-';
-	s[i] = '\0';
-	reverse(s);
+	sprintf(s,"%d",n);	
 }
 
 void itoa2(int n, char s[])
@@ -115,11 +104,11 @@ int word_length(char *s)
 	return i;
 }
 void ACTION::makemasterkey(){} //смотри хэдер ,класс USB
-char* ACTION::shifrovat(char *adr){}//задается адрес для шифрования
+char* ACTION::shifrovat(char *adr){ return NULL;}//задается адрес для шифрования
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
 void ACTION::del_disk(char *adr){} //удаление файлов из диска
-char* ACTION::from_storage(char *adr){}//берет из виртуалки конкретный файл
-char* ACTION::rasshifrovat(char *adr){}//расшифровывает файл(что выдает пока непонятно)
+char* ACTION::from_storage(char *adr){ return NULL;}//берет из виртуалки конкретный файл
+char* ACTION::rasshifrovat(char *adr){ return NULL;}//расшифровывает файл(что выдает пока непонятно)
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
@@ -177,7 +166,7 @@ void ACTION::do_delete(struct info_struct *b)
         token.log = log;
         token.pin = pin;
         makemasterkey();
-        char *res;
+        char *res=NULL;
         //for(по всем файла из папки - str)
         {
             res = from_storage(res); //внутри функции должен быть адрес конкретного файла
@@ -266,7 +255,7 @@ void ACTION::do_decode(struct info_struct *b)
         token.log = log;
         token.pin = pin;
         makemasterkey();
-        char *res;
+        char *res = NULL;
         res = from_storage(res); //внутри функции должен быть адрес конкретного файла
         res = rasshifrovat(res);
         open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
@@ -345,26 +334,77 @@ void before_start(struct info_struct *b)
 		error_detected("write");
 }
 
-int main(int argc,char **argv)
+int *add_sfd(int *arr, int *size, int sfd)
+{
+	return NULL;
+}
+
+int main(int argc,const char **argv)
 {
 	struct info_struct all_info;
-    struct sockaddr_in addr;
-    int fd,i;
-    ACTION TrueCrypt;
-    char  *str = new char[10];
-    socklen_t alen;
-    int max1 = 2;
-	printf("Server is ready. Maximum number of sockets is %d\n",max1);
-    all_info.ls = start_listen(atoi(argv[2]));
+	int *sfd_arr = NULL, sfd_size = 0;
+	int port = atoi(argv[1]);
+	char  buf[1024];
+	std::vector<ACTION> client;
+
+	ACTION TrueCrypt;
+	
+    int ls = start_listen(port);
+    all_info.ls = ls; //listening socket
+	printf("%d\n",ls);
+	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
     //before_start(&all_info);
-	for (;;) {
-        alen = sizeof(addr);
-        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){std::cout<<"tuagat"<<std::endl;
-            error_detected("accept");}
-        all_info.fd = fd;
-        i = 0;
-        do {
-        if (read(fd, str+i, 1) == 0) printf("read error\n");
+	//all_info.fd = fd;
+	for (;;) { 		//MAIN LOOP
+		printf("$\n");
+		int max_d = ls;
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(ls, &readfds);
+		for (int i = 0; i < sfd_size; i++){
+			FD_SET(sfd_arr[i], &readfds);
+			if (sfd_arr[i] > max_d)
+				max_d = sfd_arr[i];
+		}
+		int res = select(max_d + 1, &readfds, NULL, NULL, NULL);
+		if (res < 1) {
+			if (errno != EINTR)
+				error_detected("select");
+			else
+				printf("It's just the signal, don't worry!");
+			continue;
+		}
+		if (FD_ISSET(ls, &readfds)) {
+			int sfd = accept(ls,0,0);
+			sfd_arr = add_sfd(sfd_arr, &sfd_size, sfd);
+			print_new(sfd);
+		}
+		for (int i = 0; i < sfd_size; i++ ) {
+			if (FD_ISSET(sfd_arr[i], &readfds)) {
+				int rr = read(sfd_arr[i], buf, sizeof(buf) - 1);
+				if (rr == -1)
+					error_detected("read");
+				if (rr == 0 ) {
+					shutdown(sfd_arr[i],2);
+					close(sfd_arr[i]);
+					print_old(sfd_arr[i]);
+				} else {
+					buf[rr] = '\0';
+					client[i].do_command(&all_info,buf);
+				}
+			}
+		}
+	}
+/*   
+	alen = sizeof(addr);
+        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){
+			std::cout<<"tuagat"<<std::endl; // What is it? O_o
+            error_detected("accept");
+		}
+
+		i = 0;
+		do {
+				if (read(fd, str+i, 1) == 0) printf("read error\n");
         }
         while(str[i++] != '\0');
         if(!strcmp(str,"client_1\0")) {
@@ -373,7 +413,7 @@ int main(int argc,char **argv)
             if (read(fd, str+i, 1) == 0) printf("read error\n");
             }
             while(str[i++] != '\0');
-            ACTION client(1);
+			ACTION client(1);
             client.do_command(&all_info,str);
         }
         if(!strcmp(str,"client_2\0")) {
@@ -383,5 +423,7 @@ int main(int argc,char **argv)
         if (read(fd, str, 1) == 0) close(fd);
 
 	}
+	*/
+
 	return 0;
 }
