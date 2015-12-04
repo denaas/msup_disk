@@ -9,31 +9,28 @@
 #include <sys/types.h>
 #include <vector>
 
+#define N_GETUNLIM 5
+
 class USB {
 public:
     char *label;
     char *UID;
-    char *log;
     char *pin;
     USB(){
         label = new char[20];
         UID = new char[20];
-        log = new char[50];
         pin = new char[50];
     }
     USB (const USB &a){
         label = new char[20];
         UID = new char[20];
-        log = new char[50];
         pin = new char[50];
         strcpy(label,a.label);
         strcpy(UID,a.UID);
-        strcpy(log,a.log);
         strcpy(pin,a.pin);
     }
     ~USB(){
         delete []label;
-        delete []log;
         delete []UID;
         delete []pin;
     }
@@ -47,20 +44,20 @@ struct info_struct {
 };
 
 class ACTION{
-    static int N_GETUNLIM;
     int number;
 public:
     USB token;
     ACTION (int i = 0) {number = i;}
-    char* getlineunlim();
+    friend char* getlineunlim();
     int count_USB();//количество флешек вставленно
     void takeusbinf();//получаем информацию о флешке
     void do_command(struct info_struct *b, char * cmd);//выбирает кнопку из client1
     void do_encode(struct info_struct *b);//кнопка code - client1
     void do_decode(struct info_struct *b);//кнопка read - client2
     void do_delete(struct info_struct *b);//кнопка delete - client1
+    void do_key(struct info_struct *b);//кнопка masterkey - client1
     void do_alert();//останов , но не факт что будет
-    void makemasterkey();//создает мастер ключ
+    void keydecoder();//расшифровывает мастерключ
     char * shifrovat(char *adr);//шифрует диск
     void in_storage(char*str);//вставляем шимфр текст в виртуальную память
     void del_disk(char *adr);//удаляет все файлы по адресу, чтоб на компе хранился только зашифрованный текст
@@ -71,11 +68,18 @@ public:
     void open_text(char*str);//открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
 };
 
+class GLOBAL{
+public:
+    USB flash;
+    void makemasterkey(char*pin);//создает мастер ключ
+    void takeusbinf_g();//получаем информацию о флешке
+    friend char* getlineunlim();
+};
 
-int ACTION::N_GETUNLIM = 5;
+
 
 std::vector <char*> data_usb(2),check(2);
-char* ACTION::getlineunlim()                                 //функция считывает строку до \n
+char* getlineunlim()                                 //функция считывает строку до \n
 {
     char *p;
     int i = N_GETUNLIM, k = 0;
@@ -168,8 +172,44 @@ void ACTION::takeusbinf(){                 //узнает информацию �
             }
             q[i-t] = '\0';
             i++;
+            std::cout<<"take - "<<q<<std::endl;
             if (z == 0) strcpy(token.label,q);
             else strcpy(token.UID,q);
+         }
+         delete []q;
+    }
+}
+void GLOBAL::takeusbinf_g(){                 //узнает информацию о воткнутой флешке, записывает ее в вектор data: 0)LABEL 1)UUID
+    int pid,fd[2];
+    pipe(fd);
+    pid = fork();
+    if(!pid){
+         dup2(fd[1],1);
+         close(fd[0]);
+         close(fd[1]);
+         execlp("blkid","blkid","-t" ,"TYPE=vfat",NULL);
+    }
+    else {
+         dup2(fd[0],0);
+         close(fd[0]);
+         close(fd[1]);
+         char * p,*q;
+         int z,t,k,i = 0;
+         p = getlineunlim();
+         k = strlen(p);
+         while(p[i++]!=' ');
+         for (z = 0; z < 2; ++z){
+            while(p[i++]!='"');
+            t = i;
+            q = new char[k];
+            while(p[i]!='"'){
+                q[i-t] = p[i];
+                i++;
+            }
+            q[i-t] = '\0';
+            i++;
+            if (z == 0) strcpy(flash.label,q);
+            else strcpy(flash.UID,q);
          }
          delete []q;
     }

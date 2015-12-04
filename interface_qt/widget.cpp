@@ -20,7 +20,6 @@ using std::endl;
 using std::vector;
 
 int buttom = 0;
-char * log = new char[100];
 char * pin = new char[100];
 
 void error_detected(const char * s)
@@ -129,7 +128,6 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
     }
 }
 
-void makemasterkey(vector<char*> &data,char * log, char *pin){};
 
 void make_socket(char *line,char *str, char * res)
 {
@@ -148,7 +146,7 @@ void make_socket(char *line,char *str, char * res)
     write(ls,client,strlen(client)+1);
     write(ls, line, strlen(line)+1);
     write(ls, str, strlen(str)+1);
-    write(ls, log, strlen(log)+1);
+    //write(ls, log, strlen(log)+1);
     write(ls, pin, strlen(pin)+1);
     i = 0;
     do {
@@ -198,40 +196,30 @@ void Widget::EventHandler_for_button4(void)
 void Widget::EventHandler_for_button5(void)
 {
     if (buttom == 1) {
-        //здесь код для создания мастерключа, работает на кнопку "ок"
-        int flag = 0;
-        flag = count_USB();
-        if (flag == 1) {
-            takeusbinf(check);
-            if (!strcmp(data_usb[0],check[0]) && !strcmp(data_usb[1],check[1]))  {
-                /*cout<<data_usb[0]<<endl;
-                cout<<data_usb[1]<<endl;
-                cout<<check[0]<<endl;
-                cout<<check[1]<<endl;*/
-                QString helpl=ui->lineEdit_3->text();          //считываем логин из первого эдита
-                QByteArray ql = helpl.toUtf8();
-                log = ql.data();
-                QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
-                QByteArray qp = helpp.toUtf8();
-                pin = qp.data();
-                makemasterkey(data_usb,log,pin);
-                ui->textEdit_2->setText("Masterkey was successfully created");
-            }
-            else ui->textEdit_2->setText("Masterkey has not been created, because you changed USB");
-            ui->widget->setVisible(false);
-            ui->widget_2->setVisible(true);
-        }
-        else {
+             QString helpp=ui->lineEdit_4->text();           //считываем пинкод из эдита
+             QByteArray qp = helpp.toUtf8();
+             pin = qp.data();
+             char *line = "key\0";
+             char *str = "\0";
+             char *res = new char[10];
+             make_socket(line,str,res);
+             //makemasterkey(data_usb,log,pin);
+             if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("Masterkey was successfully created");
+             else  ui->textEdit_2->setText("Masterkey has not been created");
+             delete []res;
+             ui->widget->setVisible(false);
+             ui->widget_2->setVisible(true);
+        /*else {
             if (flag == 0) ui->textEdit_2->setText("Masterkey has not been created,\n because there is no USB drive inserted");
             else ui->textEdit_2->setText("Masterkey has not been created,\n because there is more than one USB drive inserted");
             ui->widget->setVisible(false);
             ui->widget_2->setVisible(true);
-        }
+        }*/
    }
    else if (buttom == 2){
-        QString helpl=ui->lineEdit_3->text();           //считываем логин из первого эдита
+        /*QString helpl=ui->lineEdit_3->text();           //считываем логин из первого эдита
         QByteArray ql = helpl.toUtf8();
-        log = ql.data();
+        log = ql.data();*/
         QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
         QByteArray qp = helpp.toUtf8();
         pin = qp.data();
@@ -239,7 +227,7 @@ void Widget::EventHandler_for_button5(void)
         QString tfile=ui->textEdit->toPlainText();      //читываем адрес шифруемого диска
         QByteArray qb = tfile.toUtf8();
         char *str = qb.data();
-        char *res = new char[5];
+        char *res = new char[10];
         make_socket(line,str,res);
         if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully encoded");
         else ui->textEdit_2->setText("File wasnot encoded");
@@ -267,10 +255,10 @@ void Widget::EventHandler_for_button5(void)
          ui->widget->setVisible(false);
          ui->widget_2->setVisible(true);
     }
-    else {
-         QString helpl=ui->lineEdit_3->text();          //считываем логин из первого эдита
+    else if (buttom == 4){
+         /*QString helpl=ui->lineEdit_3->text();          //считываем логин из первого эдита
          QByteArray ql = helpl.toUtf8();
-         log = ql.data();
+         log = ql.data();*/
          QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
          QByteArray qp = helpp.toUtf8();
          pin = qp.data();
@@ -278,7 +266,7 @@ void Widget::EventHandler_for_button5(void)
          QString tfile=ui->textEdit->toPlainText();      //читываем адрес шифруемого диска
          QByteArray qb = tfile.toUtf8();
          char *str = qb.data();
-         char *res = new char[5];
+         char *res = new char[10];
          make_socket(line,str,res);
          if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully deleted");
          else ui->textEdit_2->setText("File wasnot deleted");

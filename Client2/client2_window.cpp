@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 
-char * log = new char[100];
 char * pin = new char[100];
 
 
@@ -40,7 +39,7 @@ void make_socket(char *str, char * res)
     char *client = "client_2\0";
     write(ls,client,strlen(client)+1);
     write(ls, str, strlen(str)+1);
-    write(ls, log, strlen(log)+1);
+    //write(ls, log, strlen(log)+1);
     write(ls, pin, strlen(pin)+1);
     i = 0;
     do {
@@ -58,16 +57,16 @@ void Client2_window::EventHandler_for_button1(void)
 
 void Client2_window::EventHandler_for_button2(void)
 {
-    QString helpl=ui->lineEdit_2->text();          //считываем логин из первого эдита
+   /* QString helpl=ui->lineEdit_2->text();          //считываем логин из первого эдита
     QByteArray ql = helpl.toUtf8();
-    log = ql.data();
+    log = ql.data();*/
     QString helpp=ui->lineEdit_3->text();           //считываем пинкод из второго эдита
     QByteArray qp = helpp.toUtf8();
     pin = qp.data();
     QString tfile=ui->lineEdit->text();           //читываем адрес файла
     QByteArray qb = tfile.toUtf8();
     char *str = qb.data();
-    char *res = new char[5];
+    char *res = new char[10];
     make_socket(str,res);
     if (!strcmp(res,"Okey\0")) ui->textEdit->setText("File was successfully decoded");
     else ui->textEdit->setText("File wasnot decoded");

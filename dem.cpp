@@ -10,7 +10,7 @@
 #include <netinet/in.h> // For OS X and Linux. Doesn't need for Free BSD
 #include "header.h"
 
-ACTION GLOBAL;
+GLOBAL global;
 
 void reverse(char s[])
 {
@@ -114,7 +114,7 @@ int word_length(char *s)
 	{}
 	return i;
 }
-void ACTION::makemasterkey(){} //смотри хэдер ,класс USB
+void GLOBAL::makemasterkey(char*pin){} //global.label,global.UID
 char* ACTION::shifrovat(char *adr){}//задается адрес для шифрования
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
 void ACTION::del_disk(char *adr){} //удаление файлов из диска
@@ -123,7 +123,7 @@ char* ACTION::rasshifrovat(char *adr){}//расшифровывает файл(�
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
-
+void ACTION::keydecoder(){}//расшифровывает мастерключ token.pin,token.label,token.UID
 
 void repeat_function(int s)
 {
@@ -132,7 +132,7 @@ void repeat_function(int s)
     flag = help.count_USB();
     if (flag == 1) {
         help.takeusbinf();
-        if (!strcmp(help.token.label,GLOBAL.token.label) && !strcmp(help.token.UID,GLOBAL.token.UID))  {
+        if (!strcmp(help.token.label,global.flash.label) && !strcmp(help.token.UID,global.flash.UID))  {
             alarm(5);
             signal(SIGALRM, repeat_function);
         }
@@ -151,7 +151,6 @@ void ACTION::do_delete(struct info_struct *b)
 {
     int i = 0;
     char * str = new char[100];
-    char * log = new char[100];
     char * pin = new char[100];
     do {
     if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
@@ -159,35 +158,34 @@ void ACTION::do_delete(struct info_struct *b)
     while(str[i++] != '\0');
     i = 0;
     do {
-    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
-    }
-    while(log[i++] != '\0');
-    i = 0;
-    do {
     if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
     }
     while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
-    std::cout<<log<<std::endl;
     std::cout<<pin<<std::endl;
+    this->token.pin = pin;
     int flag = 0;
     flag = count_USB();
     if (flag == 1) {
-        takeusbinf();
-        token.log = log;
-        token.pin = pin;
-        makemasterkey();
-        char *res;
-        //for(по всем файла из папки - str)
-        {
-            res = from_storage(res); //внутри функции должен быть адрес конкретного файла
-            res = rasshifrovat(res);
-            makefile(res);           //создает файл с содержанием res  в папке str
+        this->takeusbinf();
+        if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
+            this->keydecoder();
+            char *res;
+            //for(по всем файла из папки - str)
+            {
+                res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
+                res = this->rasshifrovat(res);
+                makefile(res);           //создает файл с содержанием res  в папке str
+            }
+            delete_storage();       //удаляет виртуальную память
+            strcpy(str,"Okey\0");
+            write(b->fd,str,strlen(str)+1);
         }
-        delete_storage();       //удаляет виртуальную память
-        strcpy(str,"Okey\0");
-        write(b->fd,str,strlen(str)+1);
+        else{
+            strcpy(str,"Mistake\0");
+            write(b->fd,str,strlen(str)+1);
         }
+    }
     else{
         strcpy(str,"Mistake\0");
         write(b->fd,str,strlen(str)+1);
@@ -198,7 +196,6 @@ void ACTION::do_encode(struct info_struct *b)
 {
     int i = 0;
     char * str = new char[100];
-    char * log = new char[100];
     char * pin = new char[100];
     do {
     if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
@@ -206,30 +203,30 @@ void ACTION::do_encode(struct info_struct *b)
     while(str[i++] != '\0');
     i = 0;
     do {
-    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
-    }
-    while(log[i++] != '\0');
-    i = 0;
-    do {
     if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
     }
     while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
-    std::cout<<log<<std::endl;
     std::cout<<pin<<std::endl;
+    this->token.pin = pin;
     int flag = 0;
-    flag = count_USB();
+    flag = this->count_USB();
     if (flag == 1) {
-        takeusbinf();
-        token.log = log;
-        token.pin = pin;
-        makemasterkey();
-        char* res = shifrovat(str);
-        in_storage(res);
-        del_disk(str);
-        strcpy(str,"Okey\0");
-        write(b->fd,str,strlen(str)+1);
+        this->takeusbinf();
+        std::cout<<this->token.label<<' '<<global.flash.label<<' '<<this->token.UID<<' '<<global.flash.UID<<std::endl;
+        if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
+            this->keydecoder();
+            char* res = this->shifrovat(str);
+            this->in_storage(res);
+            this->del_disk(str);
+            strcpy(str,"Okey\0");
+            write(b->fd,str,strlen(str)+1);
         }
+        else{
+            strcpy(str,"Mistake\0");
+            write(b->fd,str,strlen(str)+1);
+        }
+    }
     else{
         strcpy(str,"Mistake\0");
         write(b->fd,str,strlen(str)+1);
@@ -240,7 +237,6 @@ void ACTION::do_decode(struct info_struct *b)
 {
     int i = 0;
     char * str = new char[100];
-    char * log = new char[100];
     char * pin = new char[100];
     do {
     if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
@@ -248,31 +244,30 @@ void ACTION::do_decode(struct info_struct *b)
     while(str[i++] != '\0');
     i = 0;
     do {
-    if (read(b ->fd, log+i, 1) == 0) printf("read error\n");
-    }
-    while(log[i++] != '\0');
-    i = 0;
-    do {
     if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
     }
     while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
-    std::cout<<log<<std::endl;
     std::cout<<pin<<std::endl;
+    this->token.pin = pin;
     int flag = 0;
-    flag = count_USB();
+    flag = this->count_USB();
     if (flag == 1) {
-        takeusbinf();
-        token.log = log;
-        token.pin = pin;
-        makemasterkey();
-        char *res;
-        res = from_storage(res); //внутри функции должен быть адрес конкретного файла
-        res = rasshifrovat(res);
-        open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
-        strcpy(str,"Okey\0");
-        write(b->fd,str,strlen(str)+1);
+        this->takeusbinf();
+        if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
+            char *res;
+            this->keydecoder();
+            res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
+            res = this->rasshifrovat(res);
+            this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
+            strcpy(str,"Okey\0");
+            write(b->fd,str,strlen(str)+1);
         }
+        else{
+            strcpy(str,"Mistake\0");
+            write(b->fd,str,strlen(str)+1);
+        }
+    }
     else{
         strcpy(str,"Mistake\0");
         write(b->fd,str,strlen(str)+1);
@@ -284,7 +279,36 @@ void ACTION::do_alert()
 	const char buf1[] = "USB was removed!\n>";
 	printf(buf1);
 }
-
+void ACTION::do_key(struct info_struct *b){
+    int i = 0;
+    char * str = new char[5];
+    char * pin = new char[100];
+    do {
+    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    }
+    while(str[i++] != '\0');
+    i = 0;
+    do {
+    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    }
+    while(pin[i++] != '\0');
+    std::cout<<str<<std::endl;
+    std::cout<<pin<<std::endl;
+    int flag = 0;
+    flag = this->count_USB();
+    if (flag == 1) {
+          global.takeusbinf_g();
+          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
+          global.makemasterkey(pin);
+          strcpy(str,"Okey\0");
+          write(b->fd,str,strlen(str)+1);
+    }
+    else{
+        strcpy(str,"Mistake\0");
+        write(b->fd,str,strlen(str)+1);
+    }
+    delete []pin;
+}
 
 void ACTION::do_command(struct info_struct *b, char * cmd)
 {
@@ -292,15 +316,15 @@ void ACTION::do_command(struct info_struct *b, char * cmd)
 		return;
 	}
     if(!strcmp(cmd,"delete\0")) {
-        do_delete(b);
+        this-> do_delete(b);
 		return;
 	}
     if(!strcmp(cmd,"encode\0")) {
-        do_encode(b);
+        this-> do_encode(b);
 		return;
 	}
-    if(!strcmp(cmd,"alert\0")) {
-		do_alert();
+    if(!strcmp(cmd,"key\0")) {
+        this->do_key(b);
 		return;
 	}
 }
@@ -341,7 +365,7 @@ void before_start(struct info_struct *b)
 	add_str(buf,"Daemon has been started!\n");
 	add_str(buf,"Identify yourself\n>");
 	wc = write(b->ls, buf, strlen(buf) + 1);
-	if (wc == -1)
+    if (wc == -1)
 		error_detected("write");
 }
 
