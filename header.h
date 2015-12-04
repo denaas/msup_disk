@@ -46,12 +46,16 @@ struct info_struct {
 class ACTION{
     int number;
 public:
+    int fd;
+    char cmd[1024];
+    int pos;
     USB token;
-    ACTION (int i = 0) {number = i;}
+    ACTION (int i = 0, int j = 0) {fd = number = i; pos = 0;*cmd=0;}
     friend char* getlineunlim();
+
     int count_USB();//количество флешек вставленно
     void takeusbinf();//получаем информацию о флешке
-    void do_command(struct info_struct *b, char * cmd);//выбирает кнопку из client1
+    void do_command(struct info_struct *b);//выбирает кнопку из client1
     void do_encode(struct info_struct *b);//кнопка code - client1
     void do_decode(struct info_struct *b);//кнопка read - client2
     void do_delete(struct info_struct *b);//кнопка delete - client1

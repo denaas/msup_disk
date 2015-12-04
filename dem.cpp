@@ -26,18 +26,7 @@ void reverse(char s[])
 
 void itoa(int n, char s[])
 {
-	int i,sign;
-	
-	if ((sign = n) < 0)
-		n = -n;
-	i = 0;
-	do {
-		s[i++] = n %10 + '0';
-	} while ((n /= 10)> 0);
-	if (sign < 0)
-		s[i++] = '-';
-	s[i] = '\0';
-	reverse(s);
+	sprintf(s,"%d",n);	
 }
 
 void itoa2(int n, char s[])
@@ -82,15 +71,6 @@ void error_detected(const char * s)
 	exit(1);
 }
 
-int is_n(char *s)
-{
-	int i;
-	for (i = 0; s[i]; i++)
-		if (s[i] == '\n')
-			return 1;
-	return 0;
-}
-
 int count_words(char *s)
 {
 	int i,out=1,nw=0;
@@ -114,12 +94,14 @@ int word_length(char *s)
 	{}
 	return i;
 }
+
 void GLOBAL::makemasterkey(char*pin){} //global.label,global.UID
-char* ACTION::shifrovat(char *adr){}//задается адрес для шифрования
+
+char* ACTION::shifrovat(char *adr){ return NULL;}//задается адрес для шифрования
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
 void ACTION::del_disk(char *adr){} //удаление файлов из диска
-char* ACTION::from_storage(char *adr){}//берет из виртуалки конкретный файл
-char* ACTION::rasshifrovat(char *adr){}//расшифровывает файл(что выдает пока непонятно)
+char* ACTION::from_storage(char *adr){ return NULL;}//берет из виртуалки конкретный файл
+char* ACTION::rasshifrovat(char *adr){ return NULL;}//расшифровывает файл(что выдает пока непонятно)
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
@@ -180,6 +162,7 @@ void ACTION::do_delete(struct info_struct *b)
             delete_storage();       //удаляет виртуальную память
             strcpy(str,"Okey\0");
             write(b->fd,str,strlen(str)+1);
+
         }
         else{
             strcpy(str,"Mistake\0");
@@ -310,20 +293,20 @@ void ACTION::do_key(struct info_struct *b){
     delete []pin;
 }
 
-void ACTION::do_command(struct info_struct *b, char * cmd)
+void ACTION::do_command(struct info_struct *b)
 {
-	if(!strcmp(cmd,"\0")) {
+	if(*cmd) {
 		return;
 	}
-    if(!strcmp(cmd,"delete\0")) {
+    if(!strcmp(cmd,"delete")) {
         this-> do_delete(b);
 		return;
 	}
-    if(!strcmp(cmd,"encode\0")) {
-        this-> do_encode(b);
+    if(!strcmp(cmd,"encode")) {
+        this-> do_encode(b);;
 		return;
 	}
-    if(!strcmp(cmd,"key\0")) {
+    if(!strcmp(cmd,"key")) {
         this->do_key(b);
 		return;
 	}
@@ -334,9 +317,9 @@ void print_new(int n)
 	printf("New client with fd = %d has been connected!\n",n);
 }
 
-void print_old(int old)
+void print_old(int old, int n)
 {
-	printf("A client with fd = %d has been disconnected!\n",old);
+	printf("A client with fd = %d has been disconnected! Number of connections: %d\n",old,n);
 }
 
 int start_listen(int port)
@@ -369,26 +352,95 @@ void before_start(struct info_struct *b)
 		error_detected("write");
 }
 
-int main(int argc,char **argv)
+int read_client(ACTION &c)
+{
+		int rr;
+		int pos = c.pos;
+
+		rr = read(c.fd, c.cmd+pos, sizeof(c.cmd) - pos - 1);
+		if (rr == -1)
+			error_detected("read");
+		if (rr == 0)
+			return 0;
+		pos+=rr;
+		c.pos = pos;
+		c.cmd[pos] = '\0';
+		return rr;
+}
+
+bool is_n(char *s)
+{
+	for (int i = 0; s[i]; i++)
+		if (s[i] == '\n')
+			return true;
+	return false;
+}
+
+int main(int argc,const char **argv)
 {
 	struct info_struct all_info;
-    struct sockaddr_in addr;
-    int fd,i;
-    ACTION TrueCrypt;
-    char  *str = new char[10];
-    socklen_t alen;
-    int max1 = 2;
-	printf("Server is ready. Maximum number of sockets is %d\n",max1);
-    all_info.ls = start_listen(atoi(argv[2]));
+	int port = atoi(argv[1]);
+	std::vector<ACTION> client;
+
+	ACTION TrueCrypt;
+	
+    int ls = start_listen(port);
+    all_info.ls = ls; //listening socket
+	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
     //before_start(&all_info);
-	for (;;) {
-        alen = sizeof(addr);
-        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){std::cout<<"tuagat"<<std::endl;
-            error_detected("accept");}
-        all_info.fd = fd;
-        i = 0;
-        do {
-        if (read(fd, str+i, 1) == 0) printf("read error\n");
+	//all_info.fd = fd;
+	for (;;) { 		//MAIN LOOP
+		int max_d = ls;
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(ls, &readfds);
+		for (int i = 0; i < client.size(); i++){
+			FD_SET(client[i].fd, &readfds);
+			if (client[i].fd > max_d)
+				max_d = client[i].fd;
+		}
+		int res = select(max_d + 1, &readfds, NULL, NULL, NULL);
+		if (res < 1) {
+			if (errno != EINTR)
+				error_detected("select");
+			else
+				printf("It's just the signal, don't worry!");
+			continue;
+		}
+		if (FD_ISSET(ls, &readfds)) {
+			int sfd = accept(ls,0,0);
+			client.insert(client.end(), ACTION(sfd));
+			print_new(sfd);
+		}
+		for (int i = 0; i < client.size(); i++ ) {
+			if (FD_ISSET(client[i].fd, &readfds)) {
+				int rr = read_client(client[i]);
+				if (rr == 0) {
+					shutdown(client[i].fd,2);
+					close(client[i].fd);
+					print_old(client[i].fd, client.size()-1);
+					client.erase(client.begin() + i);
+				} else {
+						printf("Client%d (fd = %d) wrote: %s",i+1,client[i].fd,client[i].cmd);
+					if (is_n(client[i].cmd)){
+						client[i].do_command(&all_info);
+						client[i].cmd[0]='\0';
+						client[i].pos=0;
+					}
+				}
+			}
+		}
+	}
+/*   
+	alen = sizeof(addr);
+        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){
+			std::cout<<"tuagat"<<std::endl; // What is it? O_o
+            error_detected("accept");
+		}
+
+		i = 0;
+		do {
+				if (read(fd, str+i, 1) == 0) printf("read error\n");
         }
         while(str[i++] != '\0');
         if(!strcmp(str,"client_1\0")) {
@@ -397,7 +449,7 @@ int main(int argc,char **argv)
             if (read(fd, str+i, 1) == 0) printf("read error\n");
             }
             while(str[i++] != '\0');
-            ACTION client(1);
+			ACTION client(1);
             client.do_command(&all_info,str);
         }
         if(!strcmp(str,"client_2\0")) {
@@ -407,5 +459,7 @@ int main(int argc,char **argv)
         if (read(fd, str, 1) == 0) close(fd);
 
 	}
+	*/
+
 	return 0;
 }
