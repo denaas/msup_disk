@@ -142,8 +142,8 @@ void make_socket(char *line,char *str, char * res)
     addr.sin_addr.s_addr = INADDR_ANY;
     if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
         error_detected("connect");
-    char *client = "client_1\0";
-    write(ls,client,strlen(client)+1);
+    //char *client = "client_1\0";
+    //write(ls,client,strlen(client)+1);
     write(ls, line, strlen(line)+1);
     write(ls, str, strlen(str)+1);
     //write(ls, log, strlen(log)+1);
@@ -199,7 +199,7 @@ void Widget::EventHandler_for_button5(void)
              QString helpp=ui->lineEdit_4->text();           //считываем пинкод из эдита
              QByteArray qp = helpp.toUtf8();
              pin = qp.data();
-             char *line = "key\0";
+             char *line = "key\n\0";
              char *str = "\0";
              char *res = new char[10];
              make_socket(line,str,res);

@@ -263,16 +263,18 @@ void ACTION::do_alert()
 	printf(buf1);
 }
 void ACTION::do_key(struct info_struct *b){
+    std::cout<<"tut"<<std::endl;
     int i = 0;
     char * str = new char[5];
     char * pin = new char[100];
     do {
-    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
+    if (read(fd, str+i, 1) == -1) printf("read error\n");
+       std::cout<<"tut"<<std::endl;
     }
     while(str[i++] != '\0');
     i = 0;
     do {
-    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
+    if (read(fd, pin+i, 1) == 0) printf("read error\n");
     }
     while(pin[i++] != '\0');
     std::cout<<str<<std::endl;
@@ -295,18 +297,22 @@ void ACTION::do_key(struct info_struct *b){
 
 void ACTION::do_command(struct info_struct *b)
 {
-	if(*cmd) {
+    /*if(*cmd) {
 		return;
-	}
+    }*/
     if(!strcmp(cmd,"delete")) {
         this-> do_delete(b);
 		return;
-	}
+    }
+    if(!strcmp(cmd,"decode")) {
+        this-> do_decode(b);
+        return;
+    }
     if(!strcmp(cmd,"encode")) {
         this-> do_encode(b);;
 		return;
 	}
-    if(!strcmp(cmd,"key")) {
+    if(!strcmp(cmd,"key\n")) {
         this->do_key(b);
 		return;
 	}
@@ -364,7 +370,7 @@ int read_client(ACTION &c)
 			return 0;
 		pos+=rr;
 		c.pos = pos;
-		c.cmd[pos] = '\0';
+        c.cmd[pos] = '\0';
 		return rr;
 }
 
@@ -421,7 +427,7 @@ int main(int argc,const char **argv)
 					print_old(client[i].fd, client.size()-1);
 					client.erase(client.begin() + i);
 				} else {
-						printf("Client%d (fd = %d) wrote: %s",i+1,client[i].fd,client[i].cmd);
+                        printf("Client%d (fd = %d) wrote: %s",i+1,client[i].fd,client[i].cmd);
 					if (is_n(client[i].cmd)){
 						client[i].do_command(&all_info);
 						client[i].cmd[0]='\0';

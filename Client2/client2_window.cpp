@@ -36,8 +36,8 @@ void make_socket(char *str, char * res)
     addr.sin_addr.s_addr = INADDR_ANY;
     if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
         error_detected("connect");
-    char *client = "client_2\0";
-    write(ls,client,strlen(client)+1);
+    char *line = "decode\n\0";
+    write(ls,line,strlen(line)+1);
     write(ls, str, strlen(str)+1);
     //write(ls, log, strlen(log)+1);
     write(ls, pin, strlen(pin)+1);
