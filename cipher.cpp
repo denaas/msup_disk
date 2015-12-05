@@ -36,12 +36,11 @@ void PBKDF2_HMAC_SHA256(const char* password, const unsigned char* salt,
      iterations, digest, keylen, out);
 }
  
-int do_crypt_file(char *infile, unsigned char *key, const int nid)
+int do_crypt_file(char *infile, unsigned char *key,unsigned char *iv, int nid)
 {
 	const char *outfile="tmp";//temporary file for ciphered data
 	int outlen, inlen;
 	FILE *in, *out;
-	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // вектор инициализации 
 	unsigned char inbuf[BUFSIZE], outbuf[BUFSIZE];
 	EVP_CIPHER_CTX ctx;// контекст алгоритма шифрования
 	const EVP_CIPHER * cipher;
@@ -78,7 +77,7 @@ int do_crypt_file(char *infile, unsigned char *key, const int nid)
 	return 1;
 }
 
-int do_decrypt_file(char *infile, unsigned char *key, int nid)
+int do_decrypt_file(char *infile, unsigned char *key, unsigned char *iv, int nid)
 {
 	// Объявляем переменные 
 	int outlen, inlen;// length of read and written data
@@ -87,7 +86,6 @@ int do_decrypt_file(char *infile, unsigned char *key, int nid)
 	unsigned char inbuf[BUFSIZE], outbuf[BUFSIZE];
 	EVP_CIPHER_CTX ctx;// context structure
 	const EVP_CIPHER * cipher;// structure for cipher algorithm
-	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // initialize vector
  
 	// Обнуляем контекст и выбираем алгоритм дешифрования 
 	EVP_CIPHER_CTX_init(&ctx);
@@ -117,10 +115,9 @@ int do_decrypt_file(char *infile, unsigned char *key, int nid)
 }
 
 int do_crypt_master_key(unsigned char *in, int inlen, unsigned char *out, 
-	const unsigned char *key, int nid)
+	const unsigned char *key, unsigned char *iv, int nid)
 {
 	int outlen=0; 
-	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // вектор инициализации 
 	EVP_CIPHER_CTX ctx;// контекст алгоритма шифрования
 	const EVP_CIPHER * cipher;
 	// Обнуляем структуру контекста 
@@ -138,14 +135,13 @@ int do_crypt_master_key(unsigned char *in, int inlen, unsigned char *out,
 }
 
 int do_decrypt_master_key(unsigned char *in, int inlen, unsigned char *out, 
-	unsigned char *key, int nid)
+	unsigned char *key, unsigned char *iv, int nid)
 {
 	//cout<<"Crypt key in Decrypt master key: "<<in<<endl;
 	// Объявляем переменные 
 	int outlen;// length of read and written data
 	EVP_CIPHER_CTX ctx;// context structure
 	const EVP_CIPHER * cipher;// structure for cipher algorithm
-	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // initialize vector
 
 	// Обнуляем контекст и выбираем алгоритм дешифрования 
 	EVP_CIPHER_CTX_init(&ctx);
@@ -219,10 +215,14 @@ void make_token_file(const char *password, const char *salt,
 	int mkey_len=32;// master key length
 	unsigned char mk_cipher_key[32];//256 bits key for cipher master key
 	unsigned char salt_hash[32];
+	unsigned char iv_mkey[8];// initialization vector for m-key crypt
+	unsigned char iv_data[8];// initialization vector for data crypt
 	int keylen = 32;// length of key for master key cipher
 	int iter = 4096;// number of iterations in PBKDF2 function
 	int salt_size = 32;
 	RAND_bytes(key, sizeof(key));
+	RAND_bytes(iv_mkey, sizeof(iv_mkey));
+	RAND_bytes(iv_data, sizeof(iv_data));
 	//cout<<"Master key : "<<key<<endl;
 	
 	// form structure for writing on token
@@ -239,19 +239,21 @@ void make_token_file(const char *password, const char *salt,
 	// build key for master key cipher
 	PBKDF2_HMAC_SHA256(password, salt_hash, salt_size, iter, keylen, mk_cipher_key);
 	cout<<"MKey key "<<mk_cipher_key<<endl;
-	do_crypt_master_key(key, mkey_len,token.key, mk_cipher_key, token.MKeyCipherAlg);
+	do_crypt_master_key(key, mkey_len,token.key, mk_cipher_key, 
+		iv_mkey, token.MKeyCipherAlg);
 	
 	// derive information for token integrity control
 	hmac_sha256(token.key, mkey_len, token.IntegrityCont, mk_cipher_key, token.PrfFunction);
 	token.print("token.txt");
 	cout<<mk_cipher_key<<endl;
-	do_decrypt_master_key(token.key, mkey_len, key_dec, mk_cipher_key, token.MKeyCipherAlg);
+	do_decrypt_master_key(token.key, mkey_len, key_dec, mk_cipher_key, 
+		iv_mkey, token.MKeyCipherAlg);
 	//cout<<"Decrypt key : "<<key_dec<<endl;
 	if (!memcmp(key, key_dec, 32)) 
 	{
 		cout<<"YES\n"; 
-		do_crypt_file(file, key, token.DataCipherAlg);	
-		do_decrypt_file(file, key_dec, token.DataCipherAlg);
+		do_crypt_file(file, key, iv_data, token.DataCipherAlg);	
+		do_decrypt_file(file, key_dec, iv_data, token.DataCipherAlg);
 	}
 	else cout<<"NO\n";
 }
