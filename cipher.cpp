@@ -1,6 +1,7 @@
 #include <openssl/rand.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <cstdio>
 #include <iostream>
 #include <unistd.h>
@@ -10,20 +11,32 @@
 #include "types.hpp"
 using namespace std;
  
-#define BUFSIZE 1024
+#define BUFSIZE (1024*50)
+#define BUFSIZE2 (32)
+
+void TokenStructure::print(const char *file)
+{
+	FILE *in;
+	if(!(in=fopen(file,"w+"))) cout<<"Error open file "<<file<<endl;
+	fwrite(key, 1, 32, in);
+	//fwrite(key, 1, 32, cout);
+	fprintf(in," %d %d %d %d ", MKeyCipherAlg, NumOfIterations, DataCipherAlg,
+		PrfFunction);
+	fwrite(IntegrityCont,1, 32, in);
+}
 
 // function for creating key for master key cipher using password
 // and information about USB-flash
-void PBKDF2_HMAC_SHA512(const char* password, const unsigned char* salt,
-     int iterations, unsigned int keylen, unsigned char* out)
+void PBKDF2_HMAC_SHA256(const char* password, const unsigned char* salt,
+    int salt_size, int iterations, unsigned int keylen, unsigned char* out)
 {
     const EVP_MD *digest;
-    digest=EVP_sha512();
-    PKCS5_PBKDF2_HMAC(password, strlen(password), salt, strlen((char *)salt),
+    digest=EVP_sha256();
+    PKCS5_PBKDF2_HMAC(password, strlen(password), salt, salt_size,
      iterations, digest, keylen, out);
 }
  
-int do_crypt_file(char *infile, unsigned char *key)
+int do_crypt_file(char *infile, unsigned char *key, const int nid)
 {
 	const char *outfile="tmp";//temporary file for ciphered data
 	int outlen, inlen;
@@ -41,7 +54,7 @@ int do_crypt_file(char *infile, unsigned char *key)
 	EVP_CIPHER_CTX_init(&ctx);
  
 	// Выбираем алгоритм шифрования 
-	cipher = EVP_aes_256_ctr();
+	cipher = EVP_get_cipherbynid(906);
  
 	// Инициализируем контекст алгоритма 
 	EVP_EncryptInit(&ctx, cipher, key, iv);
@@ -65,12 +78,12 @@ int do_crypt_file(char *infile, unsigned char *key)
 	return 1;
 }
 
-int do_decrypt_file(char *infile, unsigned char *key)
+int do_decrypt_file(char *infile, unsigned char *key, int nid)
 {
 	// Объявляем переменные 
 	int outlen, inlen;// length of read and written data
 	FILE *in, *out;
-	const char *outfile="tmp";
+	const char *outfile="tmp.txt";
 	unsigned char inbuf[BUFSIZE], outbuf[BUFSIZE];
 	EVP_CIPHER_CTX ctx;// context structure
 	const EVP_CIPHER * cipher;// structure for cipher algorithm
@@ -78,14 +91,14 @@ int do_decrypt_file(char *infile, unsigned char *key)
  
 	// Обнуляем контекст и выбираем алгоритм дешифрования 
 	EVP_CIPHER_CTX_init(&ctx);
-	cipher = EVP_aes_256_ctr();// initialize structure for cipher algorithm
+	cipher = EVP_get_cipherbynid(nid);// initialize structure for cipher algorithm
 	EVP_DecryptInit(&ctx, cipher, key, iv);
  
 	// Открываем входной и создаем выходной файлы 
 	if(!(in=fopen(infile,"r"))) cout<<"Error open file "<<infile<<endl;
 	if(!(out=fopen(outfile,"w"))) cout<<"Error open file "<<outfile<<endl;
 	
-	// Дешифруем данные 
+	// Расшифровываем данные 
 	for(;;) 
 	{
 		inlen = fread(inbuf, 1, BUFSIZE, in);
@@ -103,23 +116,20 @@ int do_decrypt_file(char *infile, unsigned char *key)
  
 }
 
-int do_crypt_master_key(unsigned char *in, unsigned char *out, unsigned char *key)
+int do_crypt_master_key(unsigned char *in, int inlen, unsigned char *out, 
+	const unsigned char *key, int nid)
 {
-	int outlen, inlen;
+	int outlen=0; 
 	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // вектор инициализации 
 	EVP_CIPHER_CTX ctx;// контекст алгоритма шифрования
 	const EVP_CIPHER * cipher;
 	// Обнуляем структуру контекста 
 	EVP_CIPHER_CTX_init(&ctx);
- 
 	// Выбираем алгоритм шифрования 
-	cipher = EVP_aes_192_ctr();
- 
+	cipher = EVP_get_cipherbynid(nid);
 	// Инициализируем контекст алгоритма 
 	EVP_EncryptInit(&ctx, cipher, key, iv);
- 
 	// Шифруем данные 
-	inlen = strlen( (char*) in);
 	if(!EVP_EncryptUpdate(&ctx, out, &outlen, in, inlen)) return 0; 
 	if(!EVP_EncryptFinal(&ctx, out, &outlen)) return 0;
 	
@@ -127,26 +137,71 @@ int do_crypt_master_key(unsigned char *in, unsigned char *out, unsigned char *ke
 	return 1;
 }
 
-int do_decrypt_master_key(unsigned char *in, unsigned char *out, unsigned char *key)
+int do_decrypt_master_key(unsigned char *in, int inlen, unsigned char *out, 
+	unsigned char *key, int nid)
 {
+	//cout<<"Crypt key in Decrypt master key: "<<in<<endl;
 	// Объявляем переменные 
-	int outlen, inlen;// length of read and written data
+	int outlen;// length of read and written data
 	EVP_CIPHER_CTX ctx;// context structure
 	const EVP_CIPHER * cipher;// structure for cipher algorithm
 	unsigned char iv[8]={0,0,0,0,0,0,0,0}; // initialize vector
- 
+
 	// Обнуляем контекст и выбираем алгоритм дешифрования 
 	EVP_CIPHER_CTX_init(&ctx);
-	cipher = EVP_aes_192_ctr();// initialize structure for cipher algorithm
+	cipher = EVP_get_cipherbynid(nid);// initialize structure for cipher algorithm
 	EVP_DecryptInit(&ctx, cipher, key, iv);
-	
-	// Дешифруем данные 
-	inlen = strlen((char*)in);
-	if(!EVP_DecryptUpdate(&ctx, out, &outlen, in, inlen)) 
-		return 0;
+	// Расшифровываем данные 
+	if(!EVP_DecryptUpdate(&ctx, out, &outlen, in, inlen)) return 0;
 	// Завершаем процесс дешифрования, дешифруем оставшиеся биты
 	if(!EVP_DecryptFinal(&ctx, out, &outlen)) return 0;
 	EVP_CIPHER_CTX_cleanup(&ctx);// clean structure of cipher context
+}
+
+void do_hash_for_str(const char*a, unsigned char*mas,int nid)//функция,создающая хеш для строки
+{
+	
+	EVP_MD_CTX mdctx; // контекст для вычисления хэша 
+	const EVP_MD * md; // структура с адресами функций алгоритма 
+	unsigned char md_value[EVP_MAX_MD_SIZE];
+	unsigned int md_len; // размер вычисленного хэша 
+	md = EVP_get_digestbynid(nid);// Получаем адреса функций алгоритма SHA256 и инициализируем контекст для вычисления хэша 
+	
+	// Вычисляем хэш 
+		EVP_DigestInit(&mdctx, md);
+		EVP_DigestUpdate(&mdctx, a, (unsigned long)sizeof(a));
+		EVP_DigestFinal(&mdctx, md_value, &md_len);
+		EVP_MD_CTX_cleanup(&mdctx);
+
+		for(int i=0; i<BUFSIZE2; ++i)
+			mas[i]=md_value[i];	
+}
+
+void hmac_sha256(const unsigned char* in, int inlen, unsigned char* out, 
+				unsigned char* key, int nid)
+{
+    unsigned int len = 32;
+ 	//unsigned char* result;
+    //result = (unsigned char*)malloc(sizeof(char) * len);
+    const EVP_MD * md;
+ 	md = EVP_get_digestbynid(nid);
+
+    HMAC_CTX ctx;
+    HMAC_CTX_init(&ctx);// clear structure
+    // Using sha256 hash engine here.
+    HMAC_Init(&ctx, key, 32, md);
+    HMAC_Update(&ctx, (unsigned char*) in, inlen);
+    HMAC_Final(&ctx, out, &len);
+    HMAC_CTX_cleanup(&ctx);
+ 
+   /* printf("HMAC digest: ");// print the result to check
+ 
+    for (int i = 0; i != len; i++)
+        printf("%02x", (unsigned int)out[i]);
+ 
+    printf("\n");*/
+ 
+    //free(result);
 }
 
 void print(unsigned char* buf)
@@ -156,6 +211,51 @@ void print(unsigned char* buf)
      printf("\n");
 }
 
+void make_token_file(const char *password, const char *salt, 
+	TokenStructure token, char *file)
+{
+	unsigned char key[32]; // 256 bits master key 
+	unsigned char key_dec[32];// decrypt aster key
+	int mkey_len=32;// master key length
+	unsigned char mk_cipher_key[32];//256 bits key for cipher master key
+	unsigned char salt_hash[32];
+	int keylen = 32;// length of key for master key cipher
+	int iter = 4096;// number of iterations in PBKDF2 function
+	int salt_size = 32;
+	RAND_bytes(key, sizeof(key));
+	//cout<<"Master key : "<<key<<endl;
+	
+	// form structure for writing on token
+	const EVP_CIPHER * cipher_alg_mkey;
+	cipher_alg_mkey = EVP_aes_256_ctr();// initialize structure for cipher algorithm
+	token.MKeyCipherAlg = cipher_alg_mkey->nid;
+	token.NumOfIterations = iter;
+	const EVP_CIPHER * cipher_alg_data;
+	cipher_alg_data = EVP_aes_256_ctr();// initialize structure for cipher algorithm
+	token.DataCipherAlg = cipher_alg_data->nid;
+	const EVP_MD *md = EVP_get_digestbyname("sha256");
+	token.PrfFunction=md->type;
+	do_hash_for_str(salt, salt_hash, token.PrfFunction);
+	// build key for master key cipher
+	PBKDF2_HMAC_SHA256(password, salt_hash, salt_size, iter, keylen, mk_cipher_key);
+	cout<<"MKey key "<<mk_cipher_key<<endl;
+	do_crypt_master_key(key, mkey_len,token.key, mk_cipher_key, token.MKeyCipherAlg);
+	
+	// derive information for token integrity control
+	hmac_sha256(token.key, mkey_len, token.IntegrityCont, mk_cipher_key, token.PrfFunction);
+	token.print("token.txt");
+	cout<<mk_cipher_key<<endl;
+	do_decrypt_master_key(token.key, mkey_len, key_dec, mk_cipher_key, token.MKeyCipherAlg);
+	//cout<<"Decrypt key : "<<key_dec<<endl;
+	if (!memcmp(key, key_dec, 32)) 
+	{
+		cout<<"YES\n"; 
+		do_crypt_file(file, key, token.DataCipherAlg);	
+		do_decrypt_file(file, key_dec, token.DataCipherAlg);
+	}
+	else cout<<"NO\n";
+}
+
 int main(int argc, char** argv)
 {
 	if (argc!=2)
@@ -163,41 +263,12 @@ int main(int argc, char** argv)
 		cout<<"Usage: "<<argv[0]<<" <in_file.txt> "<<endl;
 		return 0;
 	}
-	unsigned char key[32]; // 256 bits master key 
-	unsigned char key_dec[32];
+	OpenSSL_add_all_algorithms();// load information about all cipher algorithms
 	TokenStructure token;
-	unsigned char mk_cipher_key[24];//192 bits key for cipher master key
 	const char* password = "password";
 	const char *salt = "salt";
-	unsigned char salt_hash[32];
-	int keylen = 24;
-	int iter = 4096;
 	
-	RAND_bytes(key, sizeof(key));
-	cout<<"Master key : "<<key<<endl;
-	print(key);
-	
-	RAND_bytes(salt_hash, sizeof((char*)salt_hash));
-	// build key for master key cipher
-	PBKDF2_HMAC_SHA512(password, salt_hash, iter, keylen, mk_cipher_key);
-	//cout<<"PBKDF2 : "<<mk_cipher_key<<endl;
-	//print(mk_cipher_key);
-	do_crypt_master_key(key,token.key,mk_cipher_key);
-	//cout<<"Ciphered master_key : "<<token.key<<endl;
-	//print(token.key);
-	//delete [] key;
-	// form structure for writing on token
-	//token.MKeyCipherAlg=;
-	//token.NumOfIterarions=iter;
-	//token.DataCipherAlg=;
-	//token.PrfFunction=;
-	// derive information for token integrity control
-	//token.IntegrityCont=;
-	do_decrypt_master_key(token.key,key_dec,mk_cipher_key);
-	//cout<<"Decrypt key : "<<key_dec<<endl;
-	//print(key_dec);
-	if (!memcmp(key, key_dec, 32)) cout<<"YES\n"; else cout<<"NO\n";
-	do_crypt_file(argv[1], key);	
-	do_decrypt_file(argv[1], key_dec);
+	make_token_file(password, salt, token, argv[1]);
+
 	return 0;
 }
