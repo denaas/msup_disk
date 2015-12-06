@@ -48,6 +48,14 @@ void itoa2(int n, char s[])
 	reverse(s);
 }
 
+bool is_n(char *s)
+{
+	for (int i = 0; s[i]; i++)
+		if (s[i] == '\n')
+			return true;
+	return false;
+}
+
 void add_str(char to[], const char *str)
 {
 	int i = 0, j = 0;
@@ -131,19 +139,13 @@ void repeat_function(int s)
 
 void ACTION::do_delete(struct info_struct *b)
 {
-    int i = 0;
     char * str = new char[100];
     char * pin = new char[100];
-    do {
-    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
-    }
-    while(str[i++] != '\0');
-    i = 0;
-    do {
-    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
-    }
-    while(pin[i++] != '\0');
-    std::cout<<str<<std::endl;
+
+	ReadFromSocket(str);
+	ReadFromSocket(pin);
+    
+	std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
@@ -152,7 +154,7 @@ void ACTION::do_delete(struct info_struct *b)
         this->takeusbinf();
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
             this->keydecoder();
-            char *res;
+            char *res=NULL;
             //for(по всем файла из папки - str)
             {
                 res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
@@ -177,18 +179,12 @@ void ACTION::do_delete(struct info_struct *b)
 
 void ACTION::do_encode(struct info_struct *b)
 {
-    int i = 0;
     char * str = new char[100];
     char * pin = new char[100];
-    do {
-    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
-    }
-    while(str[i++] != '\0');
-    i = 0;
-    do {
-    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
-    }
-    while(pin[i++] != '\0');
+	
+	ReadFromSocket(str);
+	ReadFromSocket(pin);
+
     std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
@@ -218,28 +214,22 @@ void ACTION::do_encode(struct info_struct *b)
 
 void ACTION::do_decode(struct info_struct *b)
 {
-    int i = 0;
     char * str = new char[100];
     char * pin = new char[100];
-    do {
-    if (read(b ->fd, str+i, 1) == 0) printf("read error\n");
-    }
-    while(str[i++] != '\0');
-    i = 0;
-    do {
-    if (read(b ->fd, pin+i, 1) == 0) printf("read error\n");
-    }
-    while(pin[i++] != '\0');
-    std::cout<<str<<std::endl;
+
+	ReadFromSocket(str);
+	ReadFromSocket(pin);
+
+	std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
     flag = this->count_USB();
     if (flag == 1) {
-        this->takeusbinf();
-        if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-            char *res;
-            this->keydecoder();
+		this->takeusbinf();
+		if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
+			char *res;
+			this->keydecoder();
             res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
             res = this->rasshifrovat(res);
             this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
@@ -257,26 +247,46 @@ void ACTION::do_decode(struct info_struct *b)
     }
 }
 
+int ACTION::ReadFromSocket(char *str)
+{
+	int rr;
+	int pos = 0;
+	do {
+		rr = read(fd, str+pos, sizeof(str) - pos - 1);
+		if (rr == -1){
+			error_detected("read");
+			return 1;
+		}
+		if (rr == 0){
+			error_detected("lost connection");
+			return 2;
+		}
+		pos+=rr;
+		str[pos]= '\0';
+	} while (!::is_n(str));
+	for(int i = 0; str[i]; i++)
+		if (str[i] == '\r'){
+			str[i] = '\n';
+			str[i+1] = '\0';
+		}
+	return 0; //no imput error handling, assume it's correct;
+}
+
 void ACTION::do_alert()
 {
 	const char buf1[] = "USB was removed!\n>";
 	printf(buf1);
 }
+
 void ACTION::do_key(struct info_struct *b){
     std::cout<<"tut"<<std::endl;
-    int i = 0;
-    char * str = new char[5];
-    char * pin = new char[100];
-    do {
-    if (read(fd, str+i, 1) == -1) printf("read error\n");
-       std::cout<<"tut"<<std::endl;
-    }
-    while(str[i++] != '\0');
-    i = 0;
-    do {
-    if (read(fd, pin+i, 1) == 0) printf("read error\n");
-    }
-    while(pin[i++] != '\0');
+    //int i = 0;
+    char * str = new char[128];
+    char * pin = new char[128];
+
+	ReadFromSocket(str);
+	ReadFromSocket(pin);
+
     std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     int flag = 0;
@@ -296,25 +306,27 @@ void ACTION::do_key(struct info_struct *b){
 }
 
 void ACTION::do_command(struct info_struct *b)
-{
-    /*if(*cmd) {
-		return;
-    }*/
-    if(!strcmp(cmd,"delete")) {
-        this-> do_delete(b);
+{	
+
+    if(!*cmd) {
 		return;
     }
-    if(!strcmp(cmd,"decode")) {
+
+    if(!strcmp(cmd,"delete\n")) {
+        this-> do_delete(b);
+	return;
+    }
+    if(!strcmp(cmd,"decode\n")) {
         this-> do_decode(b);
         return;
     }
-    if(!strcmp(cmd,"encode")) {
+    if(!strcmp(cmd,"encode\n")) {
         this-> do_encode(b);;
-		return;
+	return;
 	}
     if(!strcmp(cmd,"key\n")) {
         this->do_key(b);
-		return;
+	return;
 	}
 }
 
@@ -360,26 +372,23 @@ void before_start(struct info_struct *b)
 
 int read_client(ACTION &c)
 {
-		int rr;
-		int pos = c.pos;
+	int rr;
+	int pos = c.pos;
 
-		rr = read(c.fd, c.cmd+pos, sizeof(c.cmd) - pos - 1);
-		if (rr == -1)
-			error_detected("read");
-		if (rr == 0)
-			return 0;
-		pos+=rr;
-		c.pos = pos;
-        c.cmd[pos] = '\0';
-		return rr;
-}
-
-bool is_n(char *s)
-{
-	for (int i = 0; s[i]; i++)
-		if (s[i] == '\n')
-			return true;
-	return false;
+	rr = read(c.fd, c.cmd+pos, sizeof(c.cmd) - pos - 1);
+	if (rr == -1)
+		error_detected("read");
+	if (rr == 0)
+		return 0;
+	pos+=rr;
+	c.pos = pos;
+	c.cmd[pos] = '\0';
+	for(int i = 0; c.cmd[i]; i++)
+		if (c.cmd[i] == '\r'){
+			c.cmd[i] = '\n';
+			c.cmd[i+1] = '\0';
+		}
+	return rr;
 }
 
 int main(int argc,const char **argv)
