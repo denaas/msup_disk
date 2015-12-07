@@ -133,7 +133,14 @@ void repeat_function(int s)
     }
 }
 
+void write_client(int fd,const char *str)
+{
+	int wc;
 
+	wc = write(fd, str, strlen(str) + 1);
+    if (wc == -1)
+		error_detected("write");
+}
 
 
 
@@ -233,17 +240,14 @@ void ACTION::do_decode(struct info_struct *b)
             res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
             res = this->rasshifrovat(res);
             this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
-            strcpy(str,"Okey\0");
-            write(b->fd,str,strlen(str)+1);
+			write_client(fd,"Okey\n");
         }
         else{
-            strcpy(str,"Mistake\0");
-            write(b->fd,str,strlen(str)+1);
+			write_client(fd,"Mistake\n");
         }
     }
     else{
-        strcpy(str,"Mistake\0");
-        write(b->fd,str,strlen(str)+1);
+		write_client(fd,"Mistake\n");
     }
 }
 
@@ -269,6 +273,7 @@ int ACTION::ReadFromSocket(char *str)
 			str[i] = '\n';
 			str[i+1] = '\0';
 		}
+	printf("%s",str);
 	return 0; //no imput error handling, assume it's correct;
 }
 
@@ -280,11 +285,12 @@ void ACTION::do_alert()
 
 void ACTION::do_key(struct info_struct *b){
     std::cout<<"tut"<<std::endl;
-    //int i = 0;
-    char * str = new char[128];
-    char * pin = new char[128];
-
-	ReadFromSocket(str);
+    char str[128];
+    char pin[128];
+	
+	write_client(fd,"Enter str:\n");
+   	ReadFromSocket(str);
+	write_client(fd,"Enter pin:\n");
 	ReadFromSocket(pin);
 
     std::cout<<str<<std::endl;
@@ -292,17 +298,14 @@ void ACTION::do_key(struct info_struct *b){
     int flag = 0;
     flag = this->count_USB();
     if (flag == 1) {
-          global.takeusbinf_g();
-          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
-          global.makemasterkey(pin);
-          strcpy(str,"Okey\0");
-          write(b->fd,str,strlen(str)+1);
+         global.takeusbinf_g();
+         std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
+         global.makemasterkey(pin);
+		 write_client(fd,"Okey\n");
     }
     else{
-        strcpy(str,"Mistake\0");
-        write(b->fd,str,strlen(str)+1);
+		write_client(fd,"Mistake\n");
     }
-    delete []pin;
 }
 
 void ACTION::do_command(struct info_struct *b)
@@ -314,7 +317,7 @@ void ACTION::do_command(struct info_struct *b)
 
     if(!strcmp(cmd,"delete\n")) {
         this-> do_delete(b);
-	return;
+		return;
     }
     if(!strcmp(cmd,"decode\n")) {
         this-> do_decode(b);
@@ -322,11 +325,11 @@ void ACTION::do_command(struct info_struct *b)
     }
     if(!strcmp(cmd,"encode\n")) {
         this-> do_encode(b);;
-	return;
+		return;
 	}
     if(!strcmp(cmd,"key\n")) {
         this->do_key(b);
-	return;
+		return;
 	}
 }
 
@@ -356,18 +359,6 @@ int start_listen(int port)
     if (-1 == listen(ls,5))
         error_detected("listen");
 	return ls;
-}
-
-void before_start(struct info_struct *b)
-{
-	char buf[1024]="\0";
-	int wc;
-
-	add_str(buf,"Daemon has been started!\n");
-	add_str(buf,"Identify yourself\n>");
-	wc = write(b->ls, buf, strlen(buf) + 1);
-    if (wc == -1)
-		error_detected("write");
 }
 
 int read_client(ACTION &c)
@@ -402,8 +393,6 @@ int main(int argc,const char **argv)
     int ls = start_listen(port);
     all_info.ls = ls; //listening socket
 	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
-    //before_start(&all_info);
-	//all_info.fd = fd;
 	for (;;) { 		//MAIN LOOP
 		int max_d = ls;
 		fd_set readfds;
@@ -436,7 +425,8 @@ int main(int argc,const char **argv)
 					print_old(client[i].fd, client.size()-1);
 					client.erase(client.begin() + i);
 				} else {
-                        printf("Client%d (fd = %d) wrote: %s",i+1,client[i].fd,client[i].cmd);
+                        printf("Client%d (fd = %d) wrote: %s",
+										i+1,client[i].fd,client[i].cmd);
 					if (is_n(client[i].cmd)){
 						client[i].do_command(&all_info);
 						client[i].cmd[0]='\0';
@@ -446,35 +436,5 @@ int main(int argc,const char **argv)
 			}
 		}
 	}
-/*   
-	alen = sizeof(addr);
-        if ((fd = accept(all_info.ls, (struct sockaddr*) &addr,&alen)) < 0){
-			std::cout<<"tuagat"<<std::endl; // What is it? O_o
-            error_detected("accept");
-		}
-
-		i = 0;
-		do {
-				if (read(fd, str+i, 1) == 0) printf("read error\n");
-        }
-        while(str[i++] != '\0');
-        if(!strcmp(str,"client_1\0")) {
-            int i = 0;
-            do {
-            if (read(fd, str+i, 1) == 0) printf("read error\n");
-            }
-            while(str[i++] != '\0');
-			ACTION client(1);
-            client.do_command(&all_info,str);
-        }
-        if(!strcmp(str,"client_2\0")) {
-            ACTION client(2);
-            client.do_decode(&all_info);
-        }
-        if (read(fd, str, 1) == 0) close(fd);
-
-	}
-	*/
-
 	return 0;
 }
