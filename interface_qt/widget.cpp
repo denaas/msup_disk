@@ -129,11 +129,12 @@ void takeusbinf(vector<char*> &data){                 //узнает инфор�
 }
 
 
-void make_socket(char *line,char *str, char * res)
+void make_socket(char *line,char *str, char * res)    //создаем сокет и посылаем серверу три параметра: действие, адрес и пин-код
 {
     struct sockaddr_in addr;
     int ls,i;
-    int port = 1200;
+    int port = 1200;                                        //порт для подключения
+     //-------------------работа с сокетом---------
     ls = socket(AF_INET,SOCK_STREAM, 0);
     if (ls == -1)
         error_detected("ls");
@@ -142,12 +143,14 @@ void make_socket(char *line,char *str, char * res)
     addr.sin_addr.s_addr = INADDR_ANY;
     if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
         error_detected("connect");
+    //------------------посылаем данные
     //char *client = "client_1\0";
     //write(ls,client,strlen(client)+1);
     write(ls, line, strlen(line)+1);
     write(ls, str, strlen(str)+1);
     //write(ls, log, strlen(log)+1);
     write(ls, pin, strlen(pin)+1);
+    //------------------считываем ответ
     i = 0;
     do {
     if (read(ls, res+i, 1) == 0) printf("read error\n");
@@ -158,7 +161,7 @@ void make_socket(char *line,char *str, char * res)
 
 vector <char*> data_usb(2),check(2);
 
-void Widget::EventHandler_for_button1(void)
+void Widget::EventHandler_for_button1(void)//кнопка masterkey
 {
    buttom = 1;
    int flag;
@@ -171,14 +174,15 @@ void Widget::EventHandler_for_button1(void)
    else ui->textEdit_2->setText("Masterkey has not been created,\n because there is not one USB drive inserted");
 }
 
-void Widget::EventHandler_for_button2(void)
+void Widget::EventHandler_for_button2(void) //кнопка encode
 {
    buttom = 2;
    ui->widget_2->setVisible(false);
    ui->widget->setVisible(true);
 }
 
-void Widget::EventHandler_for_button3(void)
+void Widget::EventHandler_for_button3(void) //кнопка decode
+
 {
     buttom = 3;
     ui->textEdit_2->setText("Buttom don't work");
@@ -186,14 +190,14 @@ void Widget::EventHandler_for_button3(void)
     ui->widget->setVisible(true);*/
 }
 
-void Widget::EventHandler_for_button4(void)
+void Widget::EventHandler_for_button4(void) //кнопка delete
 {
     buttom = 4;
     ui->widget_2->setVisible(false);
     ui->widget->setVisible(true);
 }
 
-void Widget::EventHandler_for_button5(void)
+void Widget::EventHandler_for_button5(void) //кнопка Ok
 {
     if (buttom == 1) {
              QString helpp=ui->lineEdit_4->text();           //считываем пинкод из эдита
@@ -277,7 +281,7 @@ void Widget::EventHandler_for_button5(void)
 
 }
 
-void Widget::EventHandler_for_button6(void)
+void Widget::EventHandler_for_button6(void) //кнопка Cancel
 {
     if (buttom == 1)ui->textEdit_2->setText("Masterkey has not been created");
     else if (buttom == 2) ui->textEdit_2->setText("File wasnot encoded");

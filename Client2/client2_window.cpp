@@ -23,11 +23,12 @@ void error_detected(const char * s)
     exit(1);
 }
 
-void make_socket(char *str, char * res)
+void make_socket(char *str, char * res)//создаем сокет и посылаем серверу три параметра: действие, адрес и пин-код
 {
     struct sockaddr_in addr;
     int ls,i;
-    int port = 1200;
+    int port = 1200;                                        //порт для подключения
+    //-------------------работа с сокетом---------
     ls = socket(AF_INET,SOCK_STREAM, 0);
     if (ls == -1)
         error_detected("ls");
@@ -36,11 +37,13 @@ void make_socket(char *str, char * res)
     addr.sin_addr.s_addr = INADDR_ANY;
     if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
         error_detected("connect");
+    //------------------посылаем данные
     char *line = "decode\n\0";
     write(ls,line,strlen(line)+1);
     write(ls, str, strlen(str)+1);
     //write(ls, log, strlen(log)+1);
     write(ls, pin, strlen(pin)+1);
+    //------------------считываем ответ
     i = 0;
     do {
     if (read(ls, res+i, 1) == 0) printf("read error\n");
@@ -49,33 +52,33 @@ void make_socket(char *str, char * res)
     close(ls);
 }
 
-void Client2_window::EventHandler_for_button1(void)
+void Client2_window::EventHandler_for_button1(void) //работа кнопки Read
 {
     ui->widget->setVisible(false);
     ui->widget_2->setVisible(true);
 }
 
-void Client2_window::EventHandler_for_button2(void)
+void Client2_window::EventHandler_for_button2(void) //работа кнопки Ok
 {
    /* QString helpl=ui->lineEdit_2->text();          //считываем логин из первого эдита
     QByteArray ql = helpl.toUtf8();
     log = ql.data();*/
-    QString helpp=ui->lineEdit_3->text();           //считываем пинкод из второго эдита
+    QString helpp=ui->lineEdit_3->text();           //считываем пинкод из эдита
     QByteArray qp = helpp.toUtf8();
     pin = qp.data();
     QString tfile=ui->lineEdit->text();           //читываем адрес файла
     QByteArray qb = tfile.toUtf8();
     char *str = qb.data();
     char *res = new char[10];
-    make_socket(str,res);
-    if (!strcmp(res,"Okey\0")) ui->textEdit->setText("File was successfully decoded");
+    make_socket(str,res);                       //вызываем функцию работы с сокетом
+    if (!strcmp(res,"Okey\0")) ui->textEdit->setText("File was successfully decoded");   //проверяем результат
     else ui->textEdit->setText("File wasnot decoded");
     delete [] res;
     ui->widget_2->setVisible(false);
     ui->widget->setVisible(true);
 }
 
-void Client2_window::EventHandler_for_button3(void)
+void Client2_window::EventHandler_for_button3(void) //работа кнопки cancel
 {
     ui->widget_2->setVisible(false);
     ui->widget->setVisible(true);

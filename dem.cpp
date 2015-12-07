@@ -85,7 +85,7 @@ void ACTION::delete_storage(){}//удаляет виртуальную памя�
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
 void ACTION::keydecoder(){}//расшифровывает мастерключ token.pin,token.label,token.UID
 
-void repeat_function(int s)
+void repeat_function(int s)         //функция проверки, что флешка внутри
 {
     int flag = 0;
     ACTION help;
@@ -119,16 +119,16 @@ void ACTION::do_delete(struct info_struct *b)
     char * str = new char[100];
     char * pin = new char[100];
 
-	ReadFromSocket(str);
-	ReadFromSocket(pin);
+    ReadFromSocket(str);                            //считываем адрес
+    ReadFromSocket(pin);                            //считываем пин
     
 	std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
-    flag = count_USB();
+    flag = count_USB();                  //проверяем количество вставленных флешек
     if (flag == 1) {
-        this->takeusbinf();
+        this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
             this->keydecoder();
             char *res=NULL;
@@ -154,27 +154,27 @@ void ACTION::do_delete(struct info_struct *b)
     }
 }
 
-void ACTION::do_encode(struct info_struct *b)
+void ACTION::do_encode(struct info_struct *b)           //кодируем диск
 {
     char * str = new char[100];
     char * pin = new char[100];
 	
-	ReadFromSocket(str);
-	ReadFromSocket(pin);
+    ReadFromSocket(str);                            //считываем адрес
+    ReadFromSocket(pin);                            //считываем пин
 
     std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
-    flag = this->count_USB();
+    flag = this->count_USB();                  //проверяем количество вставленных флешек
     if (flag == 1) {
-        this->takeusbinf();
+        this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         std::cout<<this->token.label<<' '<<global.flash.label<<' '<<this->token.UID<<' '<<global.flash.UID<<std::endl;
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-            this->keydecoder();
-            char* res = this->shifrovat(str);
-            this->in_storage(res);
-            this->del_disk(str);
+            this->keydecoder();             //расшифровываем ключ
+            char* res = this->shifrovat(str);           //шифруем
+            this->in_storage(res);          //запихиваем в виртуальную память
+            this->del_disk(str);            //удаляем с реального диска файлы
             strcpy(str,"Okey\0");
             write(b->fd,str,strlen(str)+1);
         }
@@ -189,21 +189,21 @@ void ACTION::do_encode(struct info_struct *b)
     }
 }
 
-void ACTION::do_decode(struct info_struct *b)
+void ACTION::do_decode(struct info_struct *b)       //открытие зашифрованного файла
 {
     char * str = new char[100];
     char * pin = new char[100];
 
-	ReadFromSocket(str);
-	ReadFromSocket(pin);
+    ReadFromSocket(str);                            //считываем адрес
+    ReadFromSocket(pin);                            //считываем пин
 
-	std::cout<<str<<std::endl;
+    std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
-    flag = this->count_USB();
+    flag = this->count_USB();                   //проверяем количество вставленных флешек
     if (flag == 1) {
-		this->takeusbinf();
+        this->takeusbinf();                     //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
 		if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
 			char *res;
 			this->keydecoder();
@@ -253,24 +253,24 @@ void ACTION::do_alert()
 	printf(buf1);
 }
 
-void ACTION::do_key(struct info_struct *b){
+void ACTION::do_key(struct info_struct *b){         //создаем мастер-ключ
     std::cout<<"tut"<<std::endl;
     char str[128];
     char pin[128];
 	
 	write_client(fd,"Enter str:\n");
-   	ReadFromSocket(str);
+    ReadFromSocket(str);                        //считываем адрес
 	write_client(fd,"Enter pin:\n");
-	ReadFromSocket(pin);
+    ReadFromSocket(pin);                        //считываем пин
 
     std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     int flag = 0;
-    flag = this->count_USB();
+    flag = this->count_USB();                   //проверяем количество вставленных флешек
     if (flag == 1) {
-         global.takeusbinf_g();
+         global.takeusbinf_g();                 //задаем параметры флешки с которыми потом будет все работать
          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
-         global.makemasterkey(pin);
+         global.makemasterkey(pin);             //функция создания
 		 write_client(fd,"Okey\n");
     }
     else{
@@ -278,7 +278,7 @@ void ACTION::do_key(struct info_struct *b){
     }
 }
 
-void ACTION::do_command(struct info_struct *b)
+void ACTION::do_command(struct info_struct *b)  //выбор выполняемой команды
 {	
 
     if(!*cmd) {
