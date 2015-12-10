@@ -139,18 +139,15 @@ void ACTION::do_delete(struct info_struct *b)
                 makefile(res);           //создает файл с содержанием res  в папке str
             }
             delete_storage();       //удаляет виртуальную память
-            strcpy(str,"Okey\0");
-            write(b->fd,str,strlen(str)+1);
+            write_client(fd,"Okey\n");
 
         }
         else{
-            strcpy(str,"Mistake\0");
-            write(b->fd,str,strlen(str)+1);
+            write_client(fd,"Mistake\n");
         }
     }
     else{
-        strcpy(str,"Mistake\0");
-        write(b->fd,str,strlen(str)+1);
+       write_client(fd,"Mistake\n");
     }
 }
 
@@ -175,17 +172,14 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
             char* res = this->shifrovat(str);           //шифруем
             this->in_storage(res);          //запихиваем в виртуальную память
             this->del_disk(str);            //удаляем с реального диска файлы
-            strcpy(str,"Okey\0");
-            write(b->fd,str,strlen(str)+1);
+            write_client(fd,"Okey\n");
         }
         else{
-            strcpy(str,"Mistake\0");
-            write(b->fd,str,strlen(str)+1);
+            write_client(fd,"Mistake\n");
         }
     }
     else{
-        strcpy(str,"Mistake\0");
-        write(b->fd,str,strlen(str)+1);
+        write_client(fd,"Mistake\n");
     }
 }
 
@@ -224,27 +218,20 @@ void ACTION::do_decode(struct info_struct *b)       //открытие заши�
 int ACTION::ReadFromSocket(char *str)
 {
 	int rr;
+
 	int pos = 0;
 	do {
-		rr = read(fd, str+pos, sizeof(str) - pos - 1);
+        rr = read(fd, str+pos, 1);
 		if (rr == -1){
 			error_detected("read");
-			return 1;
-		}
+            return -1;
+        }
 		if (rr == 0){
 			error_detected("lost connection");
-			return 2;
+            return 0;
 		}
-		pos+=rr;
-		str[pos]= '\0';
-	} while (!::is_n(str));
-	for(int i = 0; str[i]; i++)
-		if (str[i] == '\r'){
-			str[i] = '\n';
-			str[i+1] = '\0';
-		}
-	printf("%s",str);
-	return 0; //no imput error handling, assume it's correct;
+    } while (str[pos++] !='\0');
+    return 1; //no imput error handling, assume it's correct;
 }
 
 void ACTION::do_alert()
@@ -254,13 +241,9 @@ void ACTION::do_alert()
 }
 
 void ACTION::do_key(struct info_struct *b){         //создаем мастер-ключ
-    std::cout<<"tut"<<std::endl;
     char str[128];
     char pin[128];
-	
-	write_client(fd,"Enter str:\n");
     ReadFromSocket(str);                        //считываем адрес
-	write_client(fd,"Enter pin:\n");
     ReadFromSocket(pin);                        //считываем пин
 
     std::cout<<str<<std::endl;
@@ -334,22 +317,16 @@ int start_listen(int port)
 int read_client(ACTION &c)
 {
 	int rr;
-	int pos = c.pos;
-
-	rr = read(c.fd, c.cmd+pos, sizeof(c.cmd) - pos - 1);
-	if (rr == -1)
-		error_detected("read");
-	if (rr == 0)
-		return 0;
-	pos+=rr;
-	c.pos = pos;
-	c.cmd[pos] = '\0';
-	for(int i = 0; c.cmd[i]; i++)
-		if (c.cmd[i] == '\r'){
-			c.cmd[i] = '\n';
-			c.cmd[i+1] = '\0';
-		}
-	return rr;
+    int i = 0;
+    do {
+        rr =  read(c.fd,c.cmd+i,1);
+        if (rr == -1)
+            error_detected("read");
+        if (rr == 0)
+            return 0;
+    }
+    while(c.cmd[i++] != '\0');
+        return rr;
 }
 
 int main(int argc,const char **argv)

@@ -71,7 +71,7 @@ void Client2_window::EventHandler_for_button2(void) //работа кнопки 
     char *str = qb.data();
     char *res = new char[10];
     make_socket(str,res);                       //вызываем функцию работы с сокетом
-    if (!strcmp(res,"Okey\0")) ui->textEdit->setText("File was successfully decoded");   //проверяем результат
+    if (!strcmp(res,"Okey\n")) ui->textEdit->setText("File was successfully decoded");   //проверяем результат
     else ui->textEdit->setText("File wasnot decoded");
     delete [] res;
     ui->widget_2->setVisible(false);

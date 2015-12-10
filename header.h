@@ -20,6 +20,7 @@ public:
         label = new char[20];
         UID = new char[20];
         pin = new char[50];
+        label[0]=pin[0]=UID[0] = '\0';
     }
     USB (const USB &a){
         label = new char[20];

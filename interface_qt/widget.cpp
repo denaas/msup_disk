@@ -204,11 +204,11 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
              QByteArray qp = helpp.toUtf8();
              pin = qp.data();
              char *line = "key\n\0";
-             char *str = "\0";
+             char *str = "\n\0";
              char *res = new char[10];
              make_socket(line,str,res);
              //makemasterkey(data_usb,log,pin);
-             if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("Masterkey was successfully created");
+             if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("Masterkey was successfully created");
              else  ui->textEdit_2->setText("Masterkey has not been created");
              delete []res;
              ui->widget->setVisible(false);
@@ -227,13 +227,13 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
         QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
         QByteArray qp = helpp.toUtf8();
         pin = qp.data();
-        char *line = "encode\0";                        //ставим какая команда
+        char *line = "encode\n\0";                        //ставим какая команда
         QString tfile=ui->textEdit->toPlainText();      //читываем адрес шифруемого диска
         QByteArray qb = tfile.toUtf8();
         char *str = qb.data();
         char *res = new char[10];
         make_socket(line,str,res);
-        if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully encoded");
+        if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully encoded");
         else ui->textEdit_2->setText("File wasnot encoded");
         delete []res;
         ui->widget->setVisible(false);
@@ -252,7 +252,7 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
          char *str = qb.data();
          char *res = new char[5];
          make_socket(line,str,res);
-         if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully decoded");
+         if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully decoded");
          else ui->textEdit_2->setText("File wasnot decoded");
          delete [] res;
 */
@@ -266,13 +266,13 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
          QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
          QByteArray qp = helpp.toUtf8();
          pin = qp.data();
-         char *line = "delete\0";                        //ставим какая команда
+         char *line = "delete\n\0";                        //ставим какая команда
          QString tfile=ui->textEdit->toPlainText();      //читываем адрес шифруемого диска
          QByteArray qb = tfile.toUtf8();
          char *str = qb.data();
          char *res = new char[10];
          make_socket(line,str,res);
-         if (!strcmp(res,"Okey\0")) ui->textEdit_2->setText("File was successfully deleted");
+         if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully deleted");
          else ui->textEdit_2->setText("File wasnot deleted");
          delete []res;
          ui->widget->setVisible(false);
