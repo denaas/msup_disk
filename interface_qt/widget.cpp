@@ -181,15 +181,6 @@ void Widget::EventHandler_for_button2(void) //кнопка encode
    ui->widget->setVisible(true);
 }
 
-void Widget::EventHandler_for_button3(void) //кнопка decode
-
-{
-    buttom = 3;
-    ui->textEdit_2->setText("Buttom don't work");
-   /* ui->widget_2->setVisible(false);
-    ui->widget->setVisible(true);*/
-}
-
 void Widget::EventHandler_for_button4(void) //кнопка delete
 {
     buttom = 4;
@@ -221,10 +212,7 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
         }*/
    }
    else if (buttom == 2){
-        /*QString helpl=ui->lineEdit_3->text();           //считываем логин из первого эдита
-        QByteArray ql = helpl.toUtf8();
-        log = ql.data();*/
-        QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
+        QString helpp=ui->lineEdit_4->text();           //считываем пинкод из эдита
         QByteArray qp = helpp.toUtf8();
         pin = qp.data();
         char *line = "encode\n\0";                        //ставим какая команда
@@ -239,31 +227,8 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
         ui->widget->setVisible(false);
         ui->widget_2->setVisible(true);
    }
-    else if (buttom == 3){
-      /*   QString helpl=ui->lineEdit_3->text();          //считываем логин из первого эдита
-         QByteArray ql = helpl.toUtf8();
-         log = ql.data();
-         QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
-         QByteArray qp = helpp.toUtf8();
-         pin = qp.data();
-         char *line = "decode\0";                        //ставим какая команда
-         QString tfile=ui->textEdit->toPlainText();      //читываем адрес шифруемого диска
-         QByteArray qb = tfile.toUtf8();
-         char *str = qb.data();
-         char *res = new char[5];
-         make_socket(line,str,res);
-         if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully decoded");
-         else ui->textEdit_2->setText("File wasnot decoded");
-         delete [] res;
-*/
-         ui->widget->setVisible(false);
-         ui->widget_2->setVisible(true);
-    }
     else if (buttom == 4){
-         /*QString helpl=ui->lineEdit_3->text();          //считываем логин из первого эдита
-         QByteArray ql = helpl.toUtf8();
-         log = ql.data();*/
-         QString helpp=ui->lineEdit_4->text();           //считываем пинкод из второго эдита
+         QString helpp=ui->lineEdit_4->text();           //считываем пинкод из эдита
          QByteArray qp = helpp.toUtf8();
          pin = qp.data();
          char *line = "delete\n\0";                        //ставим какая команда
@@ -299,7 +264,6 @@ Widget::Widget(QWidget *parent) :
     ui->widget->setVisible(false);
     QObject::connect(ui->pushButton, SIGNAL(clicked()), this , SLOT(EventHandler_for_button1()));
     QObject::connect(ui->pushButton_2, SIGNAL(clicked()), this , SLOT(EventHandler_for_button2()));
-    QObject::connect(ui->pushButton_3, SIGNAL(clicked()), this , SLOT(EventHandler_for_button3()));
     QObject::connect(ui->pushButton_4, SIGNAL(clicked()), this , SLOT(EventHandler_for_button4()));
     QObject::connect(ui->pushButton_5, SIGNAL(clicked()), this , SLOT(EventHandler_for_button5()));
     QObject::connect(ui->pushButton_6, SIGNAL(clicked()), this , SLOT(EventHandler_for_button6()));
