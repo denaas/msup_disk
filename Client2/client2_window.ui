@@ -75,24 +75,11 @@
     <property name="autoFillBackground">
      <bool>true</bool>
     </property>
-    <widget class="QLineEdit" name="lineEdit_2">
-     <property name="geometry">
-      <rect>
-       <x>70</x>
-       <y>60</y>
-       <width>361</width>
-       <height>51</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Enter login</string>
-     </property>
-    </widget>
     <widget class="QLineEdit" name="lineEdit_3">
      <property name="geometry">
       <rect>
        <x>70</x>
-       <y>150</y>
+       <y>120</y>
        <width>361</width>
        <height>51</height>
       </rect>

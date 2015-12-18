@@ -60,13 +60,10 @@ void Client2_window::EventHandler_for_button1(void) //работа кнопки 
 
 void Client2_window::EventHandler_for_button2(void) //работа кнопки Ok
 {
-   /* QString helpl=ui->lineEdit_2->text();          //считываем логин из первого эдита
-    QByteArray ql = helpl.toUtf8();
-    log = ql.data();*/
     QString helpp=ui->lineEdit_3->text();           //считываем пинкод из эдита
     QByteArray qp = helpp.toUtf8();
     pin = qp.data();
-    QString tfile=ui->lineEdit->text();           //читываем адрес файла
+    QString tfile=ui->lineEdit->text();           //cчитываем адрес файла
     QByteArray qb = tfile.toUtf8();
     char *str = qb.data();
     char *res = new char[10];
