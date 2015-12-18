@@ -9,13 +9,16 @@
 #include <iostream>
 #include <netinet/in.h> // For OS X and Linux. Doesn't need for Free BSD
 #include "header.h"
+#include <dirent.h>
+#include <sys/stat.h>
+#include <cstdio>
 
 GLOBAL global;
 
 
 void itoa(int n, char s[])
 {
-	sprintf(s,"%d",n);	
+	sprintf(s,"%d",n);
 }
 
 bool is_n(char *s)
@@ -52,7 +55,7 @@ void error_detected(const char * s)
 int count_words(char *s)
 {
 	int i,out=1,nw=0;
-	
+
 	for (i = 0; s[i]; i++) {
 		if (s[i] == ' ')
 			out = 1;
@@ -77,13 +80,52 @@ void GLOBAL::makemasterkey(char*pin){} //global.label,global.UID
 
 char* ACTION::shifrovat(char *adr){ return NULL;}//задается адрес для шифрования
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
-void ACTION::del_disk(char *adr){} //удаление файлов из диска
 char* ACTION::from_storage(char *adr){ return NULL;}//берет из виртуалки конкретный файл
 char* ACTION::rasshifrovat(char *adr){ return NULL;}//расшифровывает файл(что выдает пока непонятно)
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
 void ACTION::keydecoder(){}//расшифровывает мастерключ token.pin,token.label,token.UID
+
+void ACTION::del_disk(const char *adr) //удаление файлов из диска
+{
+    struct stat s;
+    lstat(adr, &s);
+    if (!S_ISDIR(s.st_mode))
+    {
+        if (unlink(adr))
+        {
+            std::cout << "No such file or directory" << std::endl;
+        }
+        return;
+    }
+    DIR *d;
+    struct dirent *dd;
+    char name[PATH_MAX];
+    if (!(d = opendir(adr)))
+    {
+        std::cout << "No such file or directory" << std::endl;
+        return;
+    }
+    while((dd = readdir(d)))
+    {
+        if (!strcmp (dd->d_name,".") || !strcmp(dd->d_name,".."))
+            continue;
+        snprintf(name, PATH_MAX, "%s%s%s", adr, "/", dd->d_name);
+        lstat(name, &s);
+        if (S_ISDIR(s.st_mode))
+        {
+            del_disk(name);
+            rmdir(name);
+        }
+        else
+        {
+            unlink(name);
+        }
+    }
+    closedir(d);
+    rmdir(adr);
+}
 
 void repeat_function(int s)         //функция проверки, что флешка внутри
 {
@@ -121,7 +163,7 @@ void ACTION::do_delete(struct info_struct *b)
 
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
-    
+
 	std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
@@ -155,7 +197,7 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
 {
     char * str = new char[100];
     char * pin = new char[100];
-	
+
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
 
@@ -262,7 +304,7 @@ void ACTION::do_key(struct info_struct *b){         //создаем масте�
 }
 
 void ACTION::do_command(struct info_struct *b)  //выбор выполняемой команды
-{	
+{
 
     if(!*cmd) {
 		return;
@@ -336,7 +378,7 @@ int main(int argc,const char **argv)
 	std::vector<ACTION> client;
 
 	ACTION TrueCrypt;
-	
+
     int ls = start_listen(port);
     all_info.ls = ls; //listening socket
 	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
