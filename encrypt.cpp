@@ -14,6 +14,24 @@ using namespace std;
 #define BUFSIZE (1024*50)
 #define BUFSIZE2 (32)
 
+void TokenStructure::read(const char *file)//функция считывания из файла
+{
+	FILE *in;
+	int *tmp=new int[1];
+	if(!(in=fopen(file,"r+"))) cout<<"Error open file "<<file<<endl;
+	fread(key, 1, 32, in);
+	fread(tmp,1,1,in);
+	MKeyCipherAlg=tmp[0];
+	fread(tmp,1,1,in);
+	NumOfIterations=tmp[0];
+	fread(tmp,1,1,in);
+	DataCipherAlg=tmp[0];
+	fread(tmp,1,1,in);
+	PrfFunction=tmp[0];
+	fread(IntegrityCont,1, 32, in);
+	delete []tmp;
+}
+
 void TokenStructure::print(const char *file)
 {
 	FILE *in;
