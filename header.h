@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <vector>
+#include <limits.h>
 
 #define N_GETUNLIM 5
 
@@ -77,7 +78,7 @@ public:
 class GLOBAL{
 public:
     USB flash;
-    void makemasterkey(char*pin);//создает мастер ключ
+    void makemasterkey(char*pin,char *adr);//создает мастер ключ
     void takeusbinf_g();//получаем информацию о флешке
     friend char* getlineunlim();
 };

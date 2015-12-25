@@ -15,7 +15,7 @@
 #include "types.hpp"
 
 GLOBAL global;
-
+char * command_line = new char[20];
 
 void itoa(int n, char s[])
 {
@@ -52,6 +52,14 @@ void error_detected(const char * s)
 	perror(s);
 	exit(1);
 }
+char *create_string(char *result_string, char *str1, char *str2)
+{
+    strcpy(result_string, "/media/");
+    strcat(result_string, str1);
+    strcat(result_string, "/");
+    strcat(result_string, str2);
+    return result_string;
+}
 
 int count_words(char *s)
 {
@@ -77,9 +85,9 @@ int word_length(char *s)
 	return i;
 }
 
-void GLOBAL::makemasterkey(char*pas)//global.label,global.UID
+void GLOBAL::makemasterkey(char*pas,char *adr)//global.label,global.UID
 {
-    make_token_file(pas,flash.UID,flash.label);
+    make_token_file(pas,flash.UID,adr);
 }
 
 
@@ -291,6 +299,7 @@ void ACTION::do_alert()
 void ACTION::do_key(struct info_struct *b){         //создаем мастер-ключ
     char str[128];
     char pin[128];
+    char * adr = new char[50];
     ReadFromSocket(str);                        //считываем адрес
     ReadFromSocket(pin);                        //считываем пин
 
@@ -301,12 +310,14 @@ void ACTION::do_key(struct info_struct *b){         //создаем масте�
     if (flag == 1) {
          global.takeusbinf_g();                 //задаем параметры флешки с которыми потом будет все работать
          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
-         global.makemasterkey(pin);             //функция создания
+         create_string(adr,command_line,global.flash.label);
+         global.makemasterkey(pin,adr);             //функция создания
 		 write_client(fd,"Okey\n");
     }
     else{
 		write_client(fd,"Mistake\n");
     }
+    delete []adr;
 }
 
 void ACTION::do_command(struct info_struct *b)  //выбор выполняемой команды
@@ -381,6 +392,7 @@ int main(int argc,const char **argv)
 {
 	struct info_struct all_info;
     //int port = atoi(argv[1]);
+    strcpy(command_line,argv[1]);
     int port = 1200;
 	std::vector<ACTION> client;
 
