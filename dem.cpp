@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdio>
+#include "types.hpp"
 
 GLOBAL global;
 
@@ -185,7 +186,7 @@ void ACTION::do_delete(struct info_struct *b)
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
             char *res=NULL;
             res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
-            res = this->rasshifrovat(res);
+            res = this->rasshifrovat(str);
             makefile(res);           //создает файл с содержанием res  в папке str
             delete_storage();       //удаляет виртуальную память
             write_client(fd,"Okey\n");
