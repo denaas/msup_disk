@@ -235,6 +235,7 @@ void print(unsigned char* buf)
 void make_token_file(const char *password, const char *salt, 
 	TokenStructure &token, char *file)
 {
+	OpenSSL_add_all_algorithms();	
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
 	unsigned char key_dec[KEYLENGTH];// decrypt aster key
 	int mkey_len=KEYLENGTH;// master key length
@@ -369,6 +370,7 @@ void check_hash_for_file(const char *infile,int id)/*функция, прове�
 
 void encrypt(const char *password, const char *salt, const char *filename)
 {
+	OpenSSL_add_all_algorithms();
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
 	unsigned char key_dec[KEYLENGTH];// decrypt aster key
 	int mkey_len=KEYLENGTH;// master key length
@@ -393,6 +395,7 @@ void encrypt(const char *password, const char *salt, const char *filename)
 
 void decrypt(const char *password, const char *salt, const char *filename)
 {
+	OpenSSL_add_all_algorithms();
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
 	unsigned char key_dec[KEYLENGTH];// decrypt aster key
 	int mkey_len=KEYLENGTH;// master key length
