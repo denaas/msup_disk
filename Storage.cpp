@@ -337,11 +337,13 @@ void Storage::update_sblock(void)
     write(fd, i_arr, sizeof(i_arr));
     write(fd, b_arr, sizeof(b_arr));
 }
-int main()
+/*int main()
 {
     Storage s;
     s.AddFile("./readme.txt","readme.txt");
     s.LoadFile("readme.txt","./2.txt");
     s.ClearStorage();
     //s.AddFile("./readme.txt","readme.txt");
-}
+}*/
+
+
