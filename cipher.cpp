@@ -234,11 +234,8 @@ void print(unsigned char* buf)
 
 void make_token_file(const char *password, const char *salt, const char *file)
 {
-<<<<<<< HEAD
 	OpenSSL_add_all_algorithms();	
-=======
 	TokenStructure token;
->>>>>>> 609ef7666dac1c77410a90213d99c1c21f79356c
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
 	unsigned char key_dec[KEYLENGTH];// decrypt aster key
 	int mkey_len=KEYLENGTH;// master key length
@@ -421,7 +418,7 @@ void decrypt(const char *password, const char *salt, const char *filename)
 	do_decrypt_file(filename, key_dec, iv_data, token.DataCipherAlg);
 }
 
-int main(int argc, char** argv)
+/*int main(int argc, char** argv)
 {
 	if (argc!=2)
 	{
@@ -436,6 +433,6 @@ int main(int argc, char** argv)
 	encrypt(password, salt, argv[1]);
 	decrypt(password, salt, argv[1]);
 	return 0;
-}
+}*/
 
 
