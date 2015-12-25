@@ -1,5 +1,12 @@
 #include "Storage.h"
 
+void Storage::ClearStorage(void)
+{
+    unlink("./info.log");
+    unlink(s_path);
+    //this->~Storage();
+}
+
 int Storage::FindFile(const char* name)
 {
     lseek(fd, block_size, SEEK_SET);
@@ -26,7 +33,7 @@ void Storage::LoadFile(const char* name, const char* dest)
     try
     {
         int inum=FindFile(name);
-        if (inum==0) throw("No file");
+        if (inum==0) throw("No file\n");
         lseek(fd, block_size, SEEK_SET);
         read(fd, inode, sizeof(inode));
         void* buf=calloc(1, block_size);
@@ -38,9 +45,12 @@ void Storage::LoadFile(const char* name, const char* dest)
             if (inum==buf1[i].in)
             {
                 buf1[i].in=0;
+                strcpy(buf1[i].s,"");
                 break;
             }
         }
+        lseek(fd, block_size*inode[0], SEEK_SET);
+        write(fd, buf, block_size);
         free(buf);
         int fdf=creat(dest,S_IRWXU);
         if (fdf==-1) throw("File Creating Error!");
@@ -77,10 +87,13 @@ void Storage::LoadFile(const char* name, const char* dest)
             free(buf1);
         }
         free(buf);
+        lseek(fdf, 0, SEEK_SET);
+        ftruncate(fdf,inode[11]);
         add_free_inode(inum);
+        
         close(fdf);
     }
-    catch(const char* err){cerr<<err;}
+    catch(const char* err){cerr<<err<<endl;}
 
 }
 
@@ -97,14 +110,18 @@ void Storage::AddFile(const char* path, const char* name)
         if (size%block_size==0) size=size/block_size; else size=size/block_size+1;
         if (size>b_free) throw("No free space");
         lseek(fdf, 0, SEEK_SET);
+        //cerr<<i_free<<endl;
         int inum=take_free_inode();
+        //cerr<<i_free<<endl;
         void* buf=calloc(1, block_size);
         for (int i=0; i<10 && size>0; i++, size--)
         {
             inode[i]=take_free_block();
+            cerr<<inode[i]<<endl;
             read(fdf, buf, block_size);
             lseek(fd, block_size*inode[i], SEEK_SET);
             write(fd, buf, block_size);
+            //cerr<<(char*)buf<<endl;
             free(buf);
             buf=calloc(1, block_size);
         }
@@ -127,15 +144,19 @@ void Storage::AddFile(const char* path, const char* name)
             free(buf1);
         }
         free(buf);
+        //
         lseek(fd, block_size + sizeof(inode)*inum, SEEK_SET);
         write(fd, inode, sizeof(inode));
+        //
         lseek(fd, block_size, SEEK_SET);
         read(fd, inode, sizeof(inode));
-        buf=(attr*)calloc(1, block_size);
+        buf=calloc(1, block_size);
         lseek(fd, block_size*inode[0], SEEK_SET);
+        //cerr<<"cat block: "<<inode[0]<<endl;
         read(fd, buf, block_size);
         attr* buf1=(attr*)buf;
         attr a;
+        //cerr<<sizeof(a)<<endl;
         strcpy(a.s,name);
         a.in=inum;
         while(buf1->in!=0)
@@ -143,15 +164,15 @@ void Storage::AddFile(const char* path, const char* name)
             buf1++;
         }
         *buf1=a;
-        strcpy(buf1->s, name);
+        //strcpy(buf1->s, name);
         lseek(fd, block_size*inode[0], SEEK_SET);
         write(fd, buf, block_size);
-        cerr<<(char*)buf;
+        cerr<<(char*)buf<<endl;
         free(buf);
         close(fdf);
         update_sblock();
     }
-    catch(const char* err){cerr<<err;}
+    catch(const char* err){cerr<<err<<endl;}
 }
 
 int Storage::take_free_inode(void)
@@ -185,7 +206,7 @@ void Storage::add_free_inode(int n)
     throw("Problem with free inodes");
 }
 
-Storage::Storage(const char* path):block_size(4096),file_size(300),i_arr_size(256)
+Storage::Storage(const char* path):block_size(4096),file_size(10000),i_arr_size(256)
 {
     try
     {
@@ -196,20 +217,24 @@ Storage::Storage(const char* path):block_size(4096),file_size(300),i_arr_size(25
             write(fd, path, sizeof(char)*strlen(path));
             s_path=(char*)malloc(sizeof(char)*(strlen(path)+1));
             strcpy(s_path,path);
-            cerr<<s_path;
+            //cerr<<s_path<<endl;
             close(fd);
             fd=creat(s_path,S_IRUSR|S_IWUSR);
             if (fd==-1) throw("Storage Creation Error!");
+            fd=open(s_path, O_RDWR);
+            if (fd==-1) throw("Storage Opening Error!");
             void* buf=calloc(1, block_size);
             for (int i=0; i<file_size; i++) write(fd, buf, block_size);
             free(buf);
             i_free=i_arr_size-1;
             for (int i=0; i<i_arr_size-1; i++) i_arr[i]=i+1;
+            //update_sblock();
             i_blocks=sizeof(inode)*i_arr_size/block_size+1;
             int b=file_size-1-i_blocks;
             for (int i=0; i<b; i++) add_free_block(file_size-1-i);
             for (int i=0; i<12; i++) inode[i]=0;
             inode[0]=take_free_block();
+            //cerr<<"каталог блок: "<<inode[0]<<endl;
             lseek(fd, block_size, SEEK_SET);
             write(fd, inode, sizeof(inode));
             update_sblock();
@@ -230,7 +255,7 @@ Storage::Storage(const char* path):block_size(4096),file_size(300),i_arr_size(25
             read_sblock();
         }
     }
-    catch(const char* err){cerr<<err;}
+    catch(const char* err){cerr<<err<<endl;}
 }
 
 Storage::~Storage()
@@ -239,6 +264,7 @@ Storage::~Storage()
     //free(i_arr);
     //free(b_arr);
     free(s_path);
+    close(fd);
 }
 
 void Storage::add_free_block(int n)
@@ -311,9 +337,13 @@ void Storage::update_sblock(void)
     write(fd, i_arr, sizeof(i_arr));
     write(fd, b_arr, sizeof(b_arr));
 }
-int main()
+/*int main()
 {
     Storage s;
-    s.AddFile("./1.txt","1.txt");
-    s.LoadFile("1.txt","./2.txt");
-}
+    s.AddFile("./readme.txt","readme.txt");
+    s.LoadFile("readme.txt","./2.txt");
+    s.ClearStorage();
+    //s.AddFile("./readme.txt","readme.txt");
+}*/
+
+

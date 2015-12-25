@@ -52,14 +52,18 @@ void error_detected(const char * s)
 	perror(s);
 	exit(1);
 }
+
 char *create_string(char *result_string, char *str1, char *str2, char *str3)
+
 {
     strcpy(result_string, "/media/");
     strcat(result_string, str1);
     strcat(result_string, "/");
     strcat(result_string, str2);
+
     strcat(result_string, "/");
     strcat(result_string, str3);
+
     return result_string;
 }
 
@@ -320,7 +324,9 @@ void ACTION::do_key(struct info_struct *b){         //создаем масте�
     if (flag == 1) {
          global.takeusbinf_g();                 //задаем параметры флешки с которыми потом будет все работать
          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
+
          create_string(adr,command_line,global.flash.label,"token.txt");
+
          global.makemasterkey(pin,adr);             //функция создания
 		 write_client(fd,"Okey\n");
     }
