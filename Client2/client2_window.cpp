@@ -67,9 +67,20 @@ void Client2_window::EventHandler_for_button2(void) //работа кнопки 
     QByteArray qb = tfile.toUtf8();
     char *str = qb.data();
     char *res = new char[10];
-    make_socket(str,res);                       //вызываем функцию работы с сокетом
-    if (!strcmp(res,"Okey\n")) ui->textEdit->setText("File has been successfully decoded");   //проверяем результат
-    else ui->textEdit->setText("File hasn't been decoded");
+    make_socket(str,res); //вызываем функцию работы с сокетом
+    if (!strcmp(res,"Okey\n"))    //проверяем результат
+    {
+        FILE *f = fopen("../decoded_file.txt", "r");
+        char *str = new char[1024];
+        while (fgets(str, 1024, f) != 0)
+        {
+            ui->textEdit->setText(str);
+        }
+        delete [] str;
+        fclose(f);
+    }
+    else
+        ui->textEdit->setText("File hasn't been decoded");
     delete [] res;
     ui->widget_2->setVisible(false);
     ui->widget->setVisible(true);
