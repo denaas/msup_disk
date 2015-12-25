@@ -23,7 +23,7 @@ struct attr
 class Storage
 {
     public:
-    Storage(const char* path="/home/victor/HelloWorld.txt");
+    Storage(const char* path="./HelloWorld.txt");
     ~Storage();
     void AddFile(const char* path, const char* name);
     void LoadFile(const char* name, const char* dest);
