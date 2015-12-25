@@ -35,8 +35,9 @@ void hmac_sha256(const unsigned char* in, int inlen, unsigned char* out,
 				unsigned char* key, int nid);
 int do_hash_for_file(const char* infile,int id);
 void check_hash_for_file(const char *infile,int id);
-//void make_token_file(const char *password, const char *salt, 
-//	TokenStructure &token, char *file);
+void make_token_file(const char *password, const char *salt,const char *file);
+void encrypt(const char *password, const char *salt, const char *filename);
+void decrypt(const char *password, const char *salt, const char *filename);
 
 
 struct TokenStructure
