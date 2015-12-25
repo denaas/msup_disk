@@ -217,8 +217,9 @@ void GLOBAL::takeusbinf_g(){                 //узнает информацию
             i++;
             if (z == 0) strcpy(flash.label,q);
             else strcpy(flash.UID,q);
+            delete []q;
          }
-         delete []q;
+
     }
 }
 

@@ -19,38 +19,38 @@ char * command_line = new char[20];
 
 void itoa(int n, char s[])
 {
-	sprintf(s,"%d",n);
+    sprintf(s,"%d",n);
 }
 
 bool is_n(char *s)
 {
-	for (int i = 0; s[i]; i++)
-		if (s[i] == '\n')
-			return true;
-	return false;
+    for (int i = 0; s[i]; i++)
+        if (s[i] == '\n')
+            return true;
+    return false;
 }
 
 void add_str(char to[], const char *str)
 {
-	int i = 0, j = 0;
+    int i = 0, j = 0;
 
-	while(to[i])
-		i++;
-	while(str[j])
-		to[i++] = str[j++];
-	to[++i] = '\0';
+    while(to[i])
+        i++;
+    while(str[j])
+        to[i++] = str[j++];
+    to[++i] = '\0';
 }
 
 void print_info(int total, int x)
 {
-	printf("Total connections:     %3d",total);
-	printf("Value of the variable: %3d", x);
+    printf("Total connections:     %3d",total);
+    printf("Value of the variable: %3d", x);
 }
 
 void error_detected(const char * s)
 {
-	perror(s);
-	exit(1);
+    perror(s);
+    exit(1);
 }
 
 char *create_string(char *result_string, char *str1, char *str2, char *str3)
@@ -69,26 +69,26 @@ char *create_string(char *result_string, char *str1, char *str2, char *str3)
 
 int count_words(char *s)
 {
-	int i,out=1,nw=0;
+    int i,out=1,nw=0;
 
-	for (i = 0; s[i]; i++) {
-		if (s[i] == ' ')
-			out = 1;
-		else if (out) {
-			out = 0;
-			nw++;
-		}
-	}
-	return nw;
+    for (i = 0; s[i]; i++) {
+        if (s[i] == ' ')
+            out = 1;
+        else if (out) {
+            out = 0;
+            nw++;
+        }
+    }
+    return nw;
 }
 
 int word_length(char *s)
 {
-	int i;
+    int i;
 
-	for (i = 0; s[i]!= ' ' && s[i] != '\n' && s[i] != '\r'; i++)
-	{}
-	return i;
+    for (i = 0; s[i]!= ' ' && s[i] != '\n' && s[i] != '\r'; i++)
+    {}
+    return i;
 }
 
 void GLOBAL::makemasterkey(char*pas,char *adr)//global.label,global.UID
@@ -173,11 +173,11 @@ void repeat_function(int s)         //функция проверки, что ф
 
 void write_client(int fd,const char *str)
 {
-	int wc;
+    int wc;
 
-	wc = write(fd, str, strlen(str) + 1);
+    wc = write(fd, str, strlen(str) + 1);
     if (wc == -1)
-		error_detected("write");
+        error_detected("write");
 }
 
 
@@ -190,7 +190,7 @@ void ACTION::do_delete(struct info_struct *b)
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
 
-	std::cout<<str<<std::endl;
+    std::cout<<str<<std::endl;
     std::cout<<pin<<std::endl;
     this->token.pin = pin;
     int flag = 0;
@@ -239,7 +239,7 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
 
             char* res = this->shifrovat(str,adr);           //шифруем
             this->in_storage(res);          //запихиваем в виртуальную память
-            this->del_disk(str);            //удаляем с реального диска файлы
+            //this->del_disk(str);            //удаляем с реального диска файлы
             write_client(fd,"Okey\n");
         }
         else{
@@ -267,47 +267,47 @@ void ACTION::do_decode(struct info_struct *b)       //открытие заши�
     flag = this->count_USB();                   //проверяем количество вставленных флешек
     if (flag == 1) {
         this->takeusbinf();                     //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
-		if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-			char *res;
+        if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
+            char *res;
             res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
             create_string(adr,command_line,global.flash.label,"token.txt");
             res = this->rasshifrovat(str,adr);
             this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
-			write_client(fd,"Okey\n");
+            write_client(fd,"Okey\n");
         }
         else{
-			write_client(fd,"Mistake\n");
+            write_client(fd,"Mistake\n");
         }
     }
     else{
-		write_client(fd,"Mistake\n");
+        write_client(fd,"Mistake\n");
     }
     delete []adr;
 }
 
 int ACTION::ReadFromSocket(char *str)
 {
-	int rr;
+    int rr;
 
-	int pos = 0;
-	do {
+    int pos = 0;
+    do {
         rr = read(fd, str+pos, 1);
-		if (rr == -1){
-			error_detected("read");
+        if (rr == -1){
+            error_detected("read");
             return -1;
         }
-		if (rr == 0){
-			error_detected("lost connection");
+        if (rr == 0){
+            error_detected("lost connection");
             return 0;
-		}
+        }
     } while (str[pos++] !='\0');
     return 1; //no imput error handling, assume it's correct;
 }
 
 void ACTION::do_alert()
 {
-	const char buf1[] = "USB was removed!\n>";
-	printf(buf1);
+    const char buf1[] = "USB was removed!\n>";
+    printf(buf1);
 }
 
 void ACTION::do_key(struct info_struct *b){         //создаем мастер-ключ
@@ -328,10 +328,10 @@ void ACTION::do_key(struct info_struct *b){         //создаем масте�
          create_string(adr,command_line,global.flash.label,"token.txt");
 
          global.makemasterkey(pin,adr);             //функция создания
-		 write_client(fd,"Okey\n");
+         write_client(fd,"Okey\n");
     }
     else{
-		write_client(fd,"Mistake\n");
+        write_client(fd,"Mistake\n");
     }
     delete []adr;
 }
@@ -340,12 +340,12 @@ void ACTION::do_command(struct info_struct *b)  //выбор выполняем�
 {
 
     if(!*cmd) {
-		return;
+        return;
     }
 
     if(!strcmp(cmd,"delete\n")) {
         this-> do_delete(b);
-		return;
+        return;
     }
     if(!strcmp(cmd,"decode\n")) {
         this-> do_decode(b);
@@ -353,22 +353,22 @@ void ACTION::do_command(struct info_struct *b)  //выбор выполняем�
     }
     if(!strcmp(cmd,"encode\n")) {
         this-> do_encode(b);;
-		return;
-	}
+        return;
+    }
     if(!strcmp(cmd,"key\n")) {
         this->do_key(b);
-		return;
-	}
+        return;
+    }
 }
 
 void print_new(int n)
 {
-	printf("New client with fd = %d has been connected!\n",n);
+    printf("New client with fd = %d has been connected!\n",n);
 }
 
 void print_old(int old, int n)
 {
-	printf("A client with fd = %d has been disconnected! Number of connections: %d\n",old,n);
+    printf("A client with fd = %d has been disconnected! Number of connections: %d\n",old,n);
 }
 
 int start_listen(int port)
@@ -386,12 +386,12 @@ int start_listen(int port)
         error_detected("bind");
     if (-1 == listen(ls,5))
         error_detected("listen");
-	return ls;
+    return ls;
 }
 
 int read_client(ACTION &c)
 {
-	int rr;
+    int rr;
     int i = 0;
     do {
         rr =  read(c.fd,c.cmd+i,1);
@@ -406,59 +406,59 @@ int read_client(ACTION &c)
 
 int main(int argc,const char **argv)
 {
-	struct info_struct all_info;
+    struct info_struct all_info;
     //int port = atoi(argv[1]);
     strcpy(command_line,argv[1]);
     int port = 1200;
-	std::vector<ACTION> client;
+    std::vector<ACTION> client;
 
-	ACTION TrueCrypt;
+    ACTION TrueCrypt;
 
     int ls = start_listen(port);
     all_info.ls = ls; //listening socket
-	printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
-	for (;;) { 		//MAIN LOOP
-		int max_d = ls;
-		fd_set readfds;
-		FD_ZERO(&readfds);
-		FD_SET(ls, &readfds);
-		for (int i = 0; i < client.size(); i++){
-			FD_SET(client[i].fd, &readfds);
-			if (client[i].fd > max_d)
-				max_d = client[i].fd;
-		}
-		int res = select(max_d + 1, &readfds, NULL, NULL, NULL);
-		if (res < 1) {
-			if (errno != EINTR)
-				error_detected("select");
-			else
-				printf("It's just the signal, don't worry!");
-			continue;
-		}
-		if (FD_ISSET(ls, &readfds)) {
-			int sfd = accept(ls,0,0);
-			client.insert(client.end(), ACTION(sfd));
-			print_new(sfd);
-		}
-		for (int i = 0; i < client.size(); i++ ) {
-			if (FD_ISSET(client[i].fd, &readfds)) {
-				int rr = read_client(client[i]);
-				if (rr == 0) {
-					shutdown(client[i].fd,2);
-					close(client[i].fd);
-					print_old(client[i].fd, client.size()-1);
-					client.erase(client.begin() + i);
-				} else {
+    printf("Server is ready. Maximum number of sockets hasn't beed limited\n");
+    for (;;) { 		//MAIN LOOP
+        int max_d = ls;
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(ls, &readfds);
+        for (int i = 0; i < client.size(); i++){
+            FD_SET(client[i].fd, &readfds);
+            if (client[i].fd > max_d)
+                max_d = client[i].fd;
+        }
+        int res = select(max_d + 1, &readfds, NULL, NULL, NULL);
+        if (res < 1) {
+            if (errno != EINTR)
+                error_detected("select");
+            else
+                printf("It's just the signal, don't worry!");
+            continue;
+        }
+        if (FD_ISSET(ls, &readfds)) {
+            int sfd = accept(ls,0,0);
+            client.insert(client.end(), ACTION(sfd));
+            print_new(sfd);
+        }
+        for (int i = 0; i < client.size(); i++ ) {
+            if (FD_ISSET(client[i].fd, &readfds)) {
+                int rr = read_client(client[i]);
+                if (rr == 0) {
+                    shutdown(client[i].fd,2);
+                    close(client[i].fd);
+                    print_old(client[i].fd, client.size()-1);
+                    client.erase(client.begin() + i);
+                } else {
                         printf("Client%d (fd = %d) wrote: %s",
-										i+1,client[i].fd,client[i].cmd);
-					if (is_n(client[i].cmd)){
-						client[i].do_command(&all_info);
-						client[i].cmd[0]='\0';
-						client[i].pos=0;
-					}
-				}
-			}
-		}
-	}
-	return 0;
+                                        i+1,client[i].fd,client[i].cmd);
+                    if (is_n(client[i].cmd)){
+                        client[i].do_command(&all_info);
+                        client[i].cmd[0]='\0';
+                        client[i].pos=0;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
 }
