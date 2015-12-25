@@ -368,7 +368,7 @@ void check_hash_for_file(const char *infile,int id)/*функция, прове�
 
 }
 
-void encrypt(const char *password, const char *salt, const char *filename)
+void encrypt(const char *password, const char *salt, const char *filename, const char*addrtoken)
 {
 	OpenSSL_add_all_algorithms();
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
@@ -383,7 +383,7 @@ void encrypt(const char *password, const char *salt, const char *filename)
 	int iter = ITERNUMBER;// number of iterations in PBKDF2 function
 	
 	TokenStructure token;
-	token.read(password, salt, "token.txt");
+	token.read(password, salt, addrtoken);
 	do_hash_for_str(salt, salt_len, salt_hash, token.PrfFunction);
 	// build key for master key cipher
 	PBKDF2_HMAC_SHA256(password, salt_hash, HASHSIZE, iter, keylen, mk_cipher_key);
@@ -393,7 +393,7 @@ void encrypt(const char *password, const char *salt, const char *filename)
 	do_hash_for_file(filename,token.PrfFunction);
 }
 
-void decrypt(const char *password, const char *salt, const char *filename)
+void decrypt(const char *password, const char *salt, const char *filename,const char*addrtoken)
 {
 	OpenSSL_add_all_algorithms();
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
@@ -408,7 +408,7 @@ void decrypt(const char *password, const char *salt, const char *filename)
 	int iter = ITERNUMBER;// number of iterations in PBKDF2 function
 	
 	TokenStructure token;
-	token.read(password, salt, "token.txt");
+	token.read(password, salt, addrtoken);
 	do_hash_for_str(salt, salt_len, salt_hash, token.PrfFunction);
 	// build key for master key cipher
 	PBKDF2_HMAC_SHA256(password, salt_hash, HASHSIZE, iter, keylen, mk_cipher_key);
