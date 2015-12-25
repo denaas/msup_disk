@@ -232,10 +232,13 @@ void print(unsigned char* buf)
      printf("\n");
 }
 
-void make_token_file(const char *password, const char *salt, 
-	TokenStructure &token, char *file)
+void make_token_file(const char *password, const char *salt, const char *file)
 {
+<<<<<<< HEAD
 	OpenSSL_add_all_algorithms();	
+=======
+	TokenStructure token;
+>>>>>>> 609ef7666dac1c77410a90213d99c1c21f79356c
 	unsigned char key[KEYLENGTH]; // 256 bits master key 
 	unsigned char key_dec[KEYLENGTH];// decrypt aster key
 	int mkey_len=KEYLENGTH;// master key length
@@ -271,7 +274,7 @@ void make_token_file(const char *password, const char *salt,
 	// derive information for token integrity control
 	hmac_sha256(token.key, mkey_len, token.IntegrityCont, mk_cipher_key, token.PrfFunction);
 	// write to token file
-	token.print("token.txt");
+	token.print(file);
 	/*do_decrypt_master_key(token.key, mkey_len, key_dec, mk_cipher_key, 
 		iv_mkey, token.MKeyCipherAlg);
 	//cout<<"Decrypt key : "<<key_dec<<endl;
@@ -406,6 +409,7 @@ void decrypt(const char *password, const char *salt, const char *filename)
 	unsigned char iv_data[8]={0,0,0,0,0,0,0,0};// initialization vector for data crypt
 	int keylen = AUXKEYLENGTH;// length of key for master key cipher
 	int iter = ITERNUMBER;// number of iterations in PBKDF2 function
+	
 	TokenStructure token;
 	token.read(password, salt, "token.txt");
 	do_hash_for_str(salt, salt_len, salt_hash, token.PrfFunction);
@@ -425,15 +429,10 @@ int main(int argc, char** argv)
 		return 0;
 	}
 	OpenSSL_add_all_algorithms();// load information about all cipher algorithms
-	TokenStructure token, token_read;
 	const char* password = "password";
 	const char *salt = "salt";
 	
-	make_token_file(password, salt, token, argv[1]);
-	//read_from_token(password, salt, token_read, "token.txt");
-	//token_read.read(password, salt, "token.txt");
-	//cout<<token_read.MKeyCipherAlg<<" "<<token_read.NumOfIterations<<" "<<
-	//token_read.DataCipherAlg<<" "<<token_read.PrfFunction<<endl;
+	make_token_file(password, salt,"/media/root/DISK_IMG/token.txt");
 	encrypt(password, salt, argv[1]);
 	decrypt(password, salt, argv[1]);
 	return 0;

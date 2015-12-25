@@ -62,7 +62,6 @@ public:
     void do_delete(struct info_struct *b);//кнопка delete - client1
     void do_key(struct info_struct *b);//кнопка masterkey - client1
     void do_alert();//останов , но не факт что будет
-    void keydecoder();//расшифровывает мастерключ
     char * shifrovat(char *adr);//шифрует диск
     void in_storage(char*str);//вставляем шимфр текст в виртуальную память
     void del_disk(const char *adr);//удаляет все файлы по адресу, чтоб на компе хранился только зашифрованный текст
