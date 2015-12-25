@@ -38,7 +38,15 @@ void make_socket(char *str, char * res)//создаем сокет и посыл
     if (connect(ls, (struct sockaddr*) &addr, sizeof(addr)) < 0)
         error_detected("connect");
     //------------------посылаем данные
-    char *line = "decode\n\0";
+    char line[9];
+    line[0] = 'd';
+    line[1] = 'e';
+    line[2] = 'c';
+    line[3] = 'o';
+    line[4] = 'd';
+    line[5] = 'e';
+    line[6] = '\n';
+    line[7] = '\0';
     write(ls,line,strlen(line)+1);
     write(ls, str, strlen(str)+1);
     //write(ls, log, strlen(log)+1);
@@ -70,14 +78,19 @@ void Client2_window::EventHandler_for_button2(void) //работа кнопки 
     make_socket(str,res); //вызываем функцию работы с сокетом
     if (!strcmp(res,"Okey\n"))    //проверяем результат
     {
+        ui->textEdit->setText("");
         FILE *f = fopen("../decoded_file.txt", "r");
-        char *str = new char[1024];
-        while (fgets(str, 1024, f) != 0)
+        char *str_for_reading = new char[1024];
+        while (fgets(str_for_reading, 1024, f) != NULL)
         {
-            ui->textEdit->setText(str);
+            int len = strlen(str_for_reading);
+            if (str_for_reading[len - 1] == '\n')
+                str_for_reading[len - 1] = '\0';
+            ui->textEdit->append(str_for_reading);
         }
-        delete [] str;
+        delete [] str_for_reading;
         fclose(f);
+        //unlink(str);
     }
     else
         ui->textEdit->setText("File hasn't been decoded");
