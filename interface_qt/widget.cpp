@@ -171,7 +171,7 @@ void Widget::EventHandler_for_button1(void)//кнопка masterkey
         ui->widget_2->setVisible(false);
         ui->widget->setVisible(true);
    }
-   else ui->textEdit_2->setText("Masterkey has not been created,\n because there is not one USB drive inserted");
+   else ui->textEdit_2->setText("Masterkey has not been created,\n because there is no one USB drive inserted");
 }
 
 void Widget::EventHandler_for_button2(void) //кнопка encode
@@ -221,8 +221,8 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
         char *str = qb.data();
         char *res = new char[10];
         make_socket(line,str,res);
-        if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully encoded");
-        else ui->textEdit_2->setText("File wasnot encoded");
+        if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File has been successfully encoded");
+        else ui->textEdit_2->setText("File hasn't been encoded");
         delete []res;
         ui->widget->setVisible(false);
         ui->widget_2->setVisible(true);
@@ -237,8 +237,8 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
          char *str = qb.data();
          char *res = new char[10];
          make_socket(line,str,res);
-         if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File was successfully deleted");
-         else ui->textEdit_2->setText("File wasnot deleted");
+         if (!strcmp(res,"Okey\n")) ui->textEdit_2->setText("File has been successfully deleted");
+         else ui->textEdit_2->setText("File hasn't been deleted");
          delete []res;
          ui->widget->setVisible(false);
          ui->widget_2->setVisible(true);
@@ -249,9 +249,9 @@ void Widget::EventHandler_for_button5(void) //кнопка Ok
 void Widget::EventHandler_for_button6(void) //кнопка Cancel
 {
     if (buttom == 1)ui->textEdit_2->setText("Masterkey has not been created");
-    else if (buttom == 2) ui->textEdit_2->setText("File wasnot encoded");
-    else if (buttom == 3) ui->textEdit_2->setText("File wasnot decoded");
-    else ui->textEdit_2->setText("File wasnot deleted");
+    else if (buttom == 2) ui->textEdit_2->setText("File hasn't been encoded");
+    else if (buttom == 3) ui->textEdit_2->setText("File hasn't been decoded");
+    else ui->textEdit_2->setText("File hasn't been deleted");
     ui->widget->setVisible(false);
     ui->widget_2->setVisible(true);
 }

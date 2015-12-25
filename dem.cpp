@@ -374,7 +374,8 @@ int read_client(ACTION &c)
 int main(int argc,const char **argv)
 {
 	struct info_struct all_info;
-	int port = atoi(argv[1]);
+    //int port = atoi(argv[1]);
+    int port = 1200;
 	std::vector<ACTION> client;
 
 	ACTION TrueCrypt;
