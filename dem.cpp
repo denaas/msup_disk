@@ -12,6 +12,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdio>
+#include "types.hpp"
 
 GLOBAL global;
 
@@ -76,16 +77,27 @@ int word_length(char *s)
 	return i;
 }
 
-void GLOBAL::makemasterkey(char*pin){} //global.label,global.UID
+void GLOBAL::makemasterkey(char*pas)//global.label,global.UID
+{
+    make_token_file(pas,flash.UID,flash.label);
+}
 
-char* ACTION::shifrovat(char *adr){ return NULL;}//задается адрес для шифрования
+
+char* ACTION::shifrovat(char *adr) //задается адрес для шифрования
+{
+    encrypt(token.pin,token.UID,adr);
+    return NULL;
+}
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
 char* ACTION::from_storage(char *adr){ return NULL;}//берет из виртуалки конкретный файл
-char* ACTION::rasshifrovat(char *adr){ return NULL;}//расшифровывает файл(что выдает пока непонятно)
+char* ACTION::rasshifrovat(char *adr) //расшифровывает файл(что выдает пока непонятно)
+{
+    decrypt(token.pin,token.UID,adr);
+    return NULL;
+}
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
 void ACTION::delete_storage(){}//удаляет виртуальную память
 void ACTION::open_text(char*str){} //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
-void ACTION::keydecoder(){}//расшифровывает мастерключ token.pin,token.label,token.UID
 
 void ACTION::del_disk(const char *adr) //удаление файлов из диска
 {
@@ -172,14 +184,10 @@ void ACTION::do_delete(struct info_struct *b)
     if (flag == 1) {
         this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-            this->keydecoder();
             char *res=NULL;
-            //for(по всем файла из папки - str)
-            {
-                res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
-                res = this->rasshifrovat(res);
-                makefile(res);           //создает файл с содержанием res  в папке str
-            }
+            res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
+            res = this->rasshifrovat(str);
+            makefile(res);           //создает файл с содержанием res  в папке str
             delete_storage();       //удаляет виртуальную память
             write_client(fd,"Okey\n");
 
@@ -210,7 +218,6 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
         this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         std::cout<<this->token.label<<' '<<global.flash.label<<' '<<this->token.UID<<' '<<global.flash.UID<<std::endl;
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-            this->keydecoder();             //расшифровываем ключ
             char* res = this->shifrovat(str);           //шифруем
             this->in_storage(res);          //запихиваем в виртуальную память
             this->del_disk(str);            //удаляем с реального диска файлы
@@ -242,9 +249,8 @@ void ACTION::do_decode(struct info_struct *b)       //открытие заши�
         this->takeusbinf();                     //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
 		if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
 			char *res;
-			this->keydecoder();
             res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
-            res = this->rasshifrovat(res);
+            res = this->rasshifrovat(str);
             this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
 			write_client(fd,"Okey\n");
         }
