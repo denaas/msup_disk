@@ -156,7 +156,7 @@ void Storage::AddFile(const char* path, const char* name)
         read(fd, buf, block_size);
         attr* buf1=(attr*)buf;
         attr a;
-        cerr<<sizeof(a)<<endl;
+        //cerr<<sizeof(a)<<endl;
         strcpy(a.s,name);
         a.in=inum;
         while(buf1->in!=0)
@@ -342,6 +342,6 @@ int main()
     Storage s;
     s.AddFile("./readme.txt","readme.txt");
     s.LoadFile("readme.txt","./2.txt");
-    //s.ClearStorage();
+    s.ClearStorage();
     //s.AddFile("./readme.txt","readme.txt");
 }
