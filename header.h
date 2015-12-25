@@ -63,11 +63,11 @@ public:
     void do_delete(struct info_struct *b);//кнопка delete - client1
     void do_key(struct info_struct *b);//кнопка masterkey - client1
     void do_alert();//останов , но не факт что будет
-    char * shifrovat(char *adr);//шифрует диск
+    char * shifrovat(char *str,char *adr);//шифрует диск
     void in_storage(char*str);//вставляем шимфр текст в виртуальную память
     void del_disk(const char *adr);//удаляет все файлы по адресу, чтоб на компе хранился только зашифрованный текст
     char* from_storage(char *adr);//берет из виртуалки конкретный файл
-    char* rasshifrovat(char *adr);//расшифровывает файл(что выдает пока непонятно)
+    char* rasshifrovat(char *str,char *adr);//расшифровывает файл(что выдает пока непонятно)
     void makefile(char*str);//создает файл с содержанием стр
     void delete_storage();//удаляет виртуальную память
     void open_text(char*str);//открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет

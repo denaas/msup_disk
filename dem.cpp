@@ -52,12 +52,18 @@ void error_detected(const char * s)
 	perror(s);
 	exit(1);
 }
-char *create_string(char *result_string, char *str1, char *str2)
+
+char *create_string(char *result_string, char *str1, char *str2, char *str3)
+
 {
     strcpy(result_string, "/media/");
     strcat(result_string, str1);
     strcat(result_string, "/");
     strcat(result_string, str2);
+
+    strcat(result_string, "/");
+    strcat(result_string, str3);
+
     return result_string;
 }
 
@@ -91,16 +97,16 @@ void GLOBAL::makemasterkey(char*pas,char *adr)//global.label,global.UID
 }
 
 
-char* ACTION::shifrovat(char *adr) //задается адрес для шифрования
+char* ACTION::shifrovat(char *str,char *adr) //задается адрес для шифрования
 {
-    encrypt(token.pin,token.UID,adr);
+    encrypt(token.pin,token.UID,str,adr);
     return NULL;
 }
 void ACTION::in_storage(char *str){}//вставляем шимфр текст в виртуальную память
 char* ACTION::from_storage(char *adr){ return NULL;}//берет из виртуалки конкретный файл
-char* ACTION::rasshifrovat(char *adr) //расшифровывает файл(что выдает пока непонятно)
+char* ACTION::rasshifrovat(char *str,char *adr) //расшифровывает файл(что выдает пока непонятно)
 {
-    decrypt(token.pin,token.UID,adr);
+    decrypt(token.pin,token.UID,str,adr);
     return NULL;
 }
 void ACTION::makefile(char*str){}//создает файл с содержанием стр
@@ -180,7 +186,7 @@ void ACTION::do_delete(struct info_struct *b)
 {
     char * str = new char[100];
     char * pin = new char[100];
-
+    char * adr = new char[50];
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
 
@@ -193,8 +199,10 @@ void ACTION::do_delete(struct info_struct *b)
         this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
             char *res=NULL;
+            create_string(adr,command_line,global.flash.label,"token.txt");
+
             res = this->from_storage(res); //внутри функции должен быть адрес конкретного файла
-            res = this->rasshifrovat(str);
+            res = this->rasshifrovat(str,adr);
             makefile(res);           //создает файл с содержанием res  в папке str
             delete_storage();       //удаляет виртуальную память
             write_client(fd,"Okey\n");
@@ -207,13 +215,14 @@ void ACTION::do_delete(struct info_struct *b)
     else{
        write_client(fd,"Mistake\n");
     }
+        delete []adr;
 }
 
 void ACTION::do_encode(struct info_struct *b)           //кодируем диск
 {
     char * str = new char[100];
     char * pin = new char[100];
-
+    char * adr = new char[50];
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
 
@@ -226,7 +235,9 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
         this->takeusbinf();                    //берем параметры вставленной флешки и потом сравниваем их с глобальными(первоначальными)
         std::cout<<this->token.label<<' '<<global.flash.label<<' '<<this->token.UID<<' '<<global.flash.UID<<std::endl;
         if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
-            char* res = this->shifrovat(str);           //шифруем
+            create_string(adr,command_line,global.flash.label,"token.txt");
+
+            char* res = this->shifrovat(str,adr);           //шифруем
             this->in_storage(res);          //запихиваем в виртуальную память
             this->del_disk(str);            //удаляем с реального диска файлы
             write_client(fd,"Okey\n");
@@ -238,13 +249,14 @@ void ACTION::do_encode(struct info_struct *b)           //кодируем ди�
     else{
         write_client(fd,"Mistake\n");
     }
+        delete []adr;
 }
 
 void ACTION::do_decode(struct info_struct *b)       //открытие зашифрованного файла
 {
     char * str = new char[100];
     char * pin = new char[100];
-
+    char * adr = new char[50];
     ReadFromSocket(str);                            //считываем адрес
     ReadFromSocket(pin);                            //считываем пин
 
@@ -258,7 +270,8 @@ void ACTION::do_decode(struct info_struct *b)       //открытие заши�
 		if (!strcmp(this->token.label,global.flash.label) && !strcmp(this->token.UID,global.flash.UID)) {
 			char *res;
             res = this->from_storage(str); //внутри функции должен быть адрес конкретного файла
-            res = this->rasshifrovat(str);
+            create_string(adr,command_line,global.flash.label,"token.txt");
+            res = this->rasshifrovat(str,adr);
             this->open_text(res); //открывает во втором клиенте результирующий файл, возможно создает файл, клиент его открывает выводит, а потом удаляет
 			write_client(fd,"Okey\n");
         }
@@ -269,6 +282,7 @@ void ACTION::do_decode(struct info_struct *b)       //открытие заши�
     else{
 		write_client(fd,"Mistake\n");
     }
+    delete []adr;
 }
 
 int ACTION::ReadFromSocket(char *str)
@@ -310,7 +324,9 @@ void ACTION::do_key(struct info_struct *b){         //создаем масте�
     if (flag == 1) {
          global.takeusbinf_g();                 //задаем параметры флешки с которыми потом будет все работать
          std::cout<<global.flash.label<<' '<<global.flash.UID<<std::endl;
-         create_string(adr,command_line,global.flash.label);
+
+         create_string(adr,command_line,global.flash.label,"token.txt");
+
          global.makemasterkey(pin,adr);             //функция создания
 		 write_client(fd,"Okey\n");
     }
